@@ -1,0 +1,11 @@
+make.exe --dry-run --keep-going --print-directory
+'\\wsl$\Ubuntu\home\hwj20\mini'
+����Ϊ��ǰĿ¼������·�������� CMD.EXE��
+UNC ·������֧�֡�Ĭ��ֵ��Ϊ Windows Ŀ¼��
+
+make.exe: Entering directory `/c/Windows'
+ 
+make.exe: *** No targets specified and no makefile found.  Stop.
+
+make.exe: Leaving directory `/c/Windows'
+ 

@@ -1,0 +1,8 @@
+label main
+begin
+var c
+label c
+label main
+goto c
+goto main
+end
