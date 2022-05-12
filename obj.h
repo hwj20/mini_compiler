@@ -4,8 +4,8 @@
 #define R_IP 1
 #define R_BP 2
 #define R_JP 3
-#define R_TP 4
-#define R_SSP 5
+#define R_TP 4 // return value
+#define R_TEMP 5
 #define R_GEN 6
 #define R_NUM 16
 
@@ -24,11 +24,18 @@ struct rdesc /* Reg descriptor */
 	int modified;	 /* If needs spilling */
 } rdesc[R_NUM];
 
+typedef struct Stack
+{
+	int top;
+	int arr[100];
+} Stack;
+
 int tos; /* top of static */
 int tof; /* top of frame */
 int oof; /* offset of formal */
 int oon; /* offset of next frame */
 int gfs;
-int max_gfs;
+
+Stack my_stack;
 
 void tac_obj();

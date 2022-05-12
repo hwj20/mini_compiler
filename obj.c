@@ -4,6 +4,18 @@
 #include <ctype.h>
 #include "tac.h"
 #include "obj.h"
+void clear(Stack s)
+{
+	s.top = 0;
+};
+int pop(Stack s)
+{
+	return s.arr[s.top--];
+};
+void push(Stack s, int val)
+{
+	s.arr[++s.top] = val;
+};
 
 void clear_desc(int r)
 {
@@ -36,17 +48,23 @@ void spill_one(int r)
 	{
 		if (rdesc[r].var->store == 1) /* local var */
 		{
-			printf("	STO (R%u+%u),R%u\n", R_BP, rdesc[r].var->offset, r);
-		}
-		else if (rdesc[r].var->store == 2) // global stack
-		{
-			printf("	LOD R%u,STATIC_STACK\n", R_SSP);
-			printf("	STO (R%u+%u),R%u\n", R_SSP, rdesc[r].var->offset, r);
+			if (rdesc[r].var->offset >= 0)
+				printf("	STO (R%u+%d),R%u\n", R_BP, rdesc[r].var->offset, r);
+			else
+				printf("	STO (R%u%d),R%u\n", R_BP, rdesc[r].var->offset, r);
 		}
 		else /* global var */
 		{
-			printf("	LOD R%u,STATIC\n", R_TP);
-			printf("	STO (R%u+%u),R%u\n", R_TP, rdesc[r].var->offset, r);
+			if (rdesc[r].var->offset >= 0)
+			{
+				printf("	LOD R%u,STATIC\n", R_TP);
+				printf("	STO (R%u+%d),R%u\n", R_TP, rdesc[r].var->offset, r);
+			}
+			else
+			{
+				printf("	LOD R%u,STATIC\n", R_TP);
+				printf("	STO (R%u%d),R%u\n", R_TP, rdesc[r].var->offset, r);
+			}
 		}
 		rdesc[r].modified = UNMODIFIED;
 	}
@@ -93,6 +111,7 @@ void load_reg(int r, SYM *n)
 		printf("	LOD R%u,%u\n", r, n->value);
 		break;
 
+	case SYM_ADDR:
 	case SYM_VAR:
 		if (n->store == 1) /* local var */
 		{
@@ -100,11 +119,6 @@ void load_reg(int r, SYM *n)
 				printf("	LOD R%u,(R%u+%d)\n", r, R_BP, n->offset);
 			else
 				printf("	LOD R%u,(R%u-%d)\n", r, R_BP, -(n->offset));
-		}
-		else if (n->store == 2)
-		{
-			printf("	LOD R%u,STATIC_STACK\n", R_SSP);
-			printf("	LOD R%u,(R%u+%d)\n", r, R_SSP, n->offset);
 		}
 		else /* global var */
 		{
@@ -121,8 +135,12 @@ void load_reg(int r, SYM *n)
 	insert_desc(r, n, UNMODIFIED);
 }
 
+void load_val_of_addr(int r)
+{
+	printf("	LOD R%u, (R%u)\n", r, r);
+}
 /* Get the first reg as a destination reg. */
-int get_first_reg(SYM *c)
+int get_first_val_reg(SYM *c)
 {
 	int r;
 	for (r = R_GEN; r < R_NUM; r++) /* Already in a register */
@@ -158,9 +176,16 @@ int get_first_reg(SYM *c)
 	load_reg(R_GEN, c);
 	return R_GEN;
 }
+int get_first_reg(SYM *c)
+{
+	int r = get_first_val_reg(c);
+	if (c->type == SYM_ADDR)
+		load_val_of_addr(r);
+	return r;
+}
 
 /* Get the second reg as a source reg. Exclude the first reg. */
-int get_second_reg(SYM *b, int first_reg)
+int get_second_val_reg(SYM *b, int first_reg)
 {
 	int r;
 	for (r = R_GEN; r < R_NUM; r++)
@@ -198,6 +223,13 @@ int get_second_reg(SYM *b, int first_reg)
 			return r;
 		}
 	}
+}
+int get_second_reg(SYM *b, int first_reg)
+{
+	int r = get_second_val_reg(b, first_reg);
+	if (b->type == SYM_ADDR)
+		load_val_of_addr(r);
+	return r;
 }
 
 void asm_bin(char *op, SYM *a, SYM *b, SYM *c)
@@ -284,8 +316,15 @@ void asm_cmp(int op, SYM *a, SYM *b, SYM *c)
 
 void asm_copy(SYM *a, SYM *b)
 {
-	int reg1 = get_first_reg(b);	/* Load b into a register */
-	insert_desc(reg1, a, MODIFIED); /* Indicate a is there */
+	int reg1 = get_first_reg(b); /* Load b into a register */
+	int reg2 = get_second_val_reg(a, reg1);
+	if (a->type == SYM_ADDR)
+	{
+		printf("	LOD R%u, R%u\n", R_TEMP, reg2);
+		printf("	STO (R%u), R%u\n", R_TEMP, reg1);
+	}
+	else
+		insert_desc(reg1, a, MODIFIED); /* Indicate a is there */
 }
 
 void asm_cond(char *op, SYM *a, char *l)
@@ -433,8 +472,6 @@ void asm_static(void)
 
 	printf("STATIC:\n");
 	printf("	DBN 0,%u\n", tos);
-	printf("STATIC_STACK:\n");
-	printf("	DBN 0,%u\n", max_gsf);
 	printf("STACK:\n");
 }
 
@@ -498,6 +535,12 @@ void asm_code(TAC *c)
 		r = get_first_reg(c->a);
 		printf("	STO (R2+%d),R%u\n", tof + oon, r);
 		oon += 4;
+		// printf("===%d----\n", c->a->offset);
+		return;
+	case TAC_ACTUAL_ADDR:
+		printf("	LOD R%u,R2+%u\n", R_TEMP, c->a->offset);
+		printf("	STO (R2+%d),R%u\n", tof + oon, R_TEMP);
+		oon += 4;
 		return;
 
 	case TAC_CALL:
@@ -527,11 +570,12 @@ void asm_code(TAC *c)
 		c->a->offset = oof;
 		oof -= 4;
 		return;
-	case TAC_FORMAL_VALUE:
-		c->a->store = 2; /*global stack*/
-		c->a->offset = gsf;
-		gsf += 4;
-		max_gsf = max(max_gsf, gsf);
+
+	case TAC_FORMAL_ADDR:
+		c->a->store = 1; /* parameter is special local var */
+		c->a->offset = oof;
+		c->a->type = SYM_ADDR;
+		oof -= 4;
 		return;
 
 	case TAC_VAR:
@@ -550,6 +594,7 @@ void asm_code(TAC *c)
 		return;
 
 	case TAC_RETURN:
+		flush_all();
 		asm_return(c->a);
 		return;
 
@@ -570,8 +615,8 @@ void tac_obj()
 	tof = LOCAL_OFF; /* TOS allows space for link info */
 	oof = FORMAL_OFF;
 	oon = 0;
-	gsf = 0;
-	max_gfs = 0;
+	gfs = 0;
+	clear(my_stack);
 
 	int r;
 	for (r = 0; r < R_NUM; r++)

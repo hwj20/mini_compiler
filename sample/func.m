@@ -22,3 +22,12 @@ func(o,p,q)
 	return 999;
 }
 
+
+solution 1: func (a,&b) = func(a, *b) b = *b;	// pre
+{
+	// when calling
+	mkaddr b,v
+	put v into func as the value of var
+}
+solution 2: put addr and value into stack when calling
+

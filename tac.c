@@ -162,6 +162,11 @@ SYM *mk_tmp(void)
 	return mk_var(name);
 }
 
+TAC *declare_addr_para(char *name)
+{
+	return mk_tac(TAC_FORMAL_ADDR, mk_var(name), NULL, NULL);
+}
+
 TAC *declare_para(char *name)
 {
 	return mk_tac(TAC_FORMAL, mk_var(name), NULL, NULL);
@@ -349,7 +354,10 @@ TAC *do_call(char *name, EXP *arglist)
 
 	while (arglist != NULL) /* Generate ARG instructions */
 	{
-		temp = mk_tac(TAC_ACTUAL, arglist->ret, NULL, NULL);
+		if (arglist->convey_addr)
+			temp = mk_tac(TAC_ACTUAL_ADDR, arglist->ret, NULL, NULL);
+		else
+			temp = mk_tac(TAC_ACTUAL, arglist->ret, NULL, NULL);
 		temp->prev = code;
 		code = temp;
 
@@ -380,7 +388,10 @@ EXP *do_call_ret(char *name, EXP *arglist)
 
 	while (arglist != NULL) /* Generate ARG instructions */
 	{
-		temp = mk_tac(TAC_ACTUAL, arglist->ret, NULL, NULL);
+		if (arglist->convey_addr)
+			temp = mk_tac(TAC_ACTUAL_ADDR, arglist->ret, NULL, NULL);
+		else
+			temp = mk_tac(TAC_ACTUAL, arglist->ret, NULL, NULL);
 		temp->prev = code;
 		code = temp;
 
@@ -393,6 +404,13 @@ EXP *do_call_ret(char *name, EXP *arglist)
 	code = temp;
 
 	return mk_exp(NULL, ret, code);
+}
+SYM *mk_addr(int addr)
+{
+	SYM *c = mk_sym(); /* Create a new node */
+	c->type = SYM_ADDR;
+	c->value = addr;
+	return c;
 }
 
 TAC *do_lib(char *name, SYM *arg)
@@ -481,6 +499,7 @@ EXP *mk_exp(EXP *next, SYM *ret, TAC *code)
 	exp->next = next;
 	exp->ret = ret;
 	exp->tac = code;
+	exp->convey_addr = false;
 
 	return exp;
 }
@@ -525,6 +544,10 @@ char *to_str(SYM *s, char *str)
 	/* Identify the type */
 	switch (s->type)
 	{
+	case SYM_ADDR:
+		sprintf(str, "%s", s->name);
+		return str;
+
 	case SYM_FUNC:
 	case SYM_VAR:
 		/* Just return the name */
@@ -619,8 +642,15 @@ void tac_print(TAC *i)
 		printf("actual %s", to_str(i->a, sa));
 		break;
 
+	case TAC_FORMAL_ADDR:
+		printf("formal_addr %s", to_str(i->a, sa));
+		break;
+
 	case TAC_FORMAL:
 		printf("formal %s", to_str(i->a, sa));
+		break;
+	case TAC_ACTUAL_ADDR:
+		printf("actual_addr %s", to_str(i->a, sa));
 		break;
 
 	case TAC_CALL:

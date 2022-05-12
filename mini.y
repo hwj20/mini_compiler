@@ -88,10 +88,19 @@ function_head : IDENTIFIER
 }
 ;
 
-parameter_list : IDENTIFIER
+parameter_list : '&' IDENTIFIER
+{
+	$$=declare_addr_para($2);
+}
+| IDENTIFIER
 {
 	$$=declare_para($1);
 }               
+| parameter_list ',' '&' IDENTIFIER
+{
+	$$=join_tac($1, declare_addr_para($4));
+}               
+
 | parameter_list ',' IDENTIFIER
 {
 	$$=join_tac($1, declare_para($3));
@@ -197,6 +206,11 @@ expression : expression '+' expression
 | INTEGER
 {
 	$$=mk_exp(NULL, mk_const(atoi($1)), NULL);
+}
+| '&' IDENTIFIER
+{
+	$$=mk_exp(NULL, get_var($2), NULL);
+	$$->convey_addr = true;
 }
 | IDENTIFIER
 {
