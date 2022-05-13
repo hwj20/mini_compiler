@@ -16,24 +16,24 @@ main:
 	# var n
 
 	# l = 1
-	LOD R6,1
-	LOD R7,(R2+8)
+	LOD R7,1
+	LOD R13,(R2+8)
 
 	# m = 2
-	LOD R7,2
-	LOD R8,(R2+12)
+	LOD R6,2
+	LOD R13,(R2+12)
 
 	# n = 3
-	LOD R8,3
-	LOD R9,(R2+16)
+	LOD R11,3
+	LOD R13,(R2+16)
 
 	# actual l
-	STO (R2+8),R6
-	STO (R2+20),R6
+	STO (R2+8),R7
+	STO (R2+20),R7
 
 	# call PRINTN
-	STO (R2+12),R7
-	STO (R2+16),R8
+	STO (R2+12),R6
+	STO (R2+16),R11
 	STO (R2+24),R2
 	LOD R4,R1+32
 	STO (R2+28),R4
@@ -41,8 +41,8 @@ main:
 	JMP PRINTN
 
 	# actual m
-	LOD R6,(R2+12)
-	STO (R2+20),R6
+	LOD R7,(R2+12)
+	STO (R2+20),R7
 
 	# call PRINTN
 	STO (R2+24),R2
@@ -52,8 +52,8 @@ main:
 	JMP PRINTN
 
 	# actual n
-	LOD R6,(R2+16)
-	STO (R2+20),R6
+	LOD R9,(R2+16)
+	STO (R2+20),R9
 
 	# call PRINTN
 	STO (R2+24),R2
@@ -63,8 +63,8 @@ main:
 	JMP PRINTN
 
 	# actual L1
-	LOD R6,L1
-	STO (R2+20),R6
+	LOD R12,L1
+	STO (R2+20),R12
 
 	# call PRINTS
 	STO (R2+24),R2
@@ -76,16 +76,16 @@ main:
 	# var t0
 
 	# actual n
-	LOD R6,(R2+16)
-	STO (R2+24),R6
+	LOD R7,(R2+16)
+	STO (R2+24),R7
 
 	# actual_addr m
 	LOD R5,R2+12
 	STO (R2+28),R5
 
 	# actual l
-	LOD R7,(R2+8)
-	STO (R2+32),R7
+	LOD R11,(R2+8)
+	STO (R2+32),R11
 
 	# t0 = call func
 	STO (R2+36),R2
@@ -95,15 +95,15 @@ main:
 	JMP func
 
 	# n = t0
-	LOD R6,R4
-	LOD R7,(R2+16)
+	LOD R10,R4
+	LOD R11,(R2+16)
 
 	# actual l
-	LOD R7,(R2+8)
-	STO (R2+24),R7
+	LOD R13,(R2+8)
+	STO (R2+24),R13
 
 	# call PRINTN
-	STO (R2+16),R6
+	STO (R2+16),R10
 	STO (R2+28),R2
 	LOD R4,R1+32
 	STO (R2+32),R4
@@ -111,8 +111,8 @@ main:
 	JMP PRINTN
 
 	# actual m
-	LOD R6,(R2+12)
-	STO (R2+24),R6
+	LOD R11,(R2+12)
+	STO (R2+24),R11
 
 	# call PRINTN
 	STO (R2+28),R2
@@ -122,8 +122,8 @@ main:
 	JMP PRINTN
 
 	# actual n
-	LOD R6,(R2+16)
-	STO (R2+24),R6
+	LOD R10,(R2+16)
+	STO (R2+24),R10
 
 	# call PRINTN
 	STO (R2+28),R2
@@ -133,8 +133,8 @@ main:
 	JMP PRINTN
 
 	# actual L1
-	LOD R6,L1
-	STO (R2+24),R6
+	LOD R12,L1
+	STO (R2+24),R12
 
 	# call PRINTS
 	STO (R2+28),R2
@@ -155,8 +155,8 @@ main:
 	JMP PRINTN
 
 	# actual L1
-	LOD R6,L1
-	STO (R2+24),R6
+	LOD R13,L1
+	STO (R2+24),R13
 
 	# call PRINTS
 	STO (R2+28),R2
@@ -184,23 +184,23 @@ func:
 	# var t1
 
 	# t1 = o + q
-	LOD R6,(R2-4)
-	LOD R7,(R2-12)
-	ADD R6,R7
+	LOD R7,(R2-4)
+	LOD R14,(R2-12)
+	ADD R7,R14
 
 	# p = t1
-	STO (R2+8),R6
-	LOD R8,(R2-8)
-	LOD R5, R8
-	STO (R5), R6
+	STO (R2+8),R7
+	LOD R14,(R2-8)
+	LOD R5, R14
+	STO (R5), R7
 
 	# o = p
-	LOD R8, (R8)
-	LOD R9,(R2-4)
+	LOD R14, (R14)
+	LOD R12,(R2-4)
 
 	# actual o
-	STO (R2-4),R8
-	STO (R2+12),R8
+	STO (R2-4),R14
+	STO (R2+12),R14
 
 	# call PRINTN
 	STO (R2+16),R2
@@ -210,9 +210,9 @@ func:
 	JMP PRINTN
 
 	# actual p
-	LOD R6,(R2-8)
-	LOD R6, (R6)
-	STO (R2+12),R6
+	LOD R12,(R2-8)
+	LOD R12, (R12)
+	STO (R2+12),R12
 
 	# call PRINTN
 	STO (R2+16),R2
@@ -222,8 +222,8 @@ func:
 	JMP PRINTN
 
 	# actual q
-	LOD R6,(R2-12)
-	STO (R2+12),R6
+	LOD R14,(R2-12)
+	STO (R2+12),R14
 
 	# call PRINTN
 	STO (R2+16),R2
@@ -233,8 +233,8 @@ func:
 	JMP PRINTN
 
 	# actual L1
-	LOD R6,L1
-	STO (R2+12),R6
+	LOD R14,L1
+	STO (R2+12),R14
 
 	# call PRINTS
 	STO (R2+16),R2

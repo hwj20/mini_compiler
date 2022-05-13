@@ -20,57 +20,62 @@ main:
 	# var m
 
 	# i = 8
-	LOD R5,8
+	LOD R7,8
+	LOD R13,(R2+8)
 
 	# var t0
 
 	# t0 = i + 2
-	STO (R2+8),R5
+	STO (R2+8),R7
 	LOD R6,2
-	ADD R5,R6
+	ADD R7,R6
 
 	# j = t0
-	STO (R2+28),R5
+	STO (R2+28),R7
+	LOD R13,(R2+12)
 
 	# var t1
 
 	# t1 = i - 3
-	LOD R7,(R2+8)
-	LOD R8,3
-	SUB R7,R8
+	LOD R11,(R2+8)
+	LOD R13,3
+	SUB R11,R13
 
 	# k = t1
-	STO (R2+32),R7
+	STO (R2+32),R11
+	LOD R9,(R2+16)
 
 	# var t2
 
 	# t2 = i * 2
-	LOD R9,(R2+8)
+	LOD R12,(R2+8)
 	LOD R10,2
-	MUL R9,R10
+	MUL R12,R10
 
 	# l = t2
-	STO (R2+36),R9
+	STO (R2+36),R12
+	LOD R13,(R2+20)
 
 	# var t3
 
 	# t3 = i / 2
-	LOD R11,(R2+8)
-	LOD R12,2
-	DIV R11,R12
+	LOD R10,(R2+8)
+	LOD R6,2
+	DIV R10,R6
 
 	# m = t3
-	STO (R2+40),R11
+	STO (R2+40),R10
+	LOD R13,(R2+24)
 
 	# actual L1
-	LOD R13,L1
-	STO (R2+44),R13
+	LOD R14,L1
+	STO (R2+44),R14
 
 	# call PRINTS
-	STO (R2+12),R5
-	STO (R2+16),R7
-	STO (R2+20),R9
-	STO (R2+24),R11
+	STO (R2+12),R7
+	STO (R2+24),R10
+	STO (R2+16),R11
+	STO (R2+20),R12
 	STO (R2+48),R2
 	LOD R4,R1+32
 	STO (R2+52),R4
@@ -78,8 +83,8 @@ main:
 	JMP PRINTS
 
 	# actual i
-	LOD R5,(R2+8)
-	STO (R2+44),R5
+	LOD R14,(R2+8)
+	STO (R2+44),R14
 
 	# call PRINTN
 	STO (R2+48),R2
@@ -89,8 +94,8 @@ main:
 	JMP PRINTN
 
 	# actual L2
-	LOD R5,L2
-	STO (R2+44),R5
+	LOD R12,L2
+	STO (R2+44),R12
 
 	# call PRINTS
 	STO (R2+48),R2
@@ -100,8 +105,8 @@ main:
 	JMP PRINTS
 
 	# actual L3
-	LOD R5,L3
-	STO (R2+44),R5
+	LOD R12,L3
+	STO (R2+44),R12
 
 	# call PRINTS
 	STO (R2+48),R2
@@ -111,8 +116,8 @@ main:
 	JMP PRINTS
 
 	# actual j
-	LOD R5,(R2+12)
-	STO (R2+44),R5
+	LOD R14,(R2+12)
+	STO (R2+44),R14
 
 	# call PRINTN
 	STO (R2+48),R2
@@ -122,8 +127,8 @@ main:
 	JMP PRINTN
 
 	# actual L2
-	LOD R5,L2
-	STO (R2+44),R5
+	LOD R14,L2
+	STO (R2+44),R14
 
 	# call PRINTS
 	STO (R2+48),R2
@@ -133,8 +138,8 @@ main:
 	JMP PRINTS
 
 	# actual L4
-	LOD R5,L4
-	STO (R2+44),R5
+	LOD R14,L4
+	STO (R2+44),R14
 
 	# call PRINTS
 	STO (R2+48),R2
@@ -144,8 +149,8 @@ main:
 	JMP PRINTS
 
 	# actual k
-	LOD R5,(R2+16)
-	STO (R2+44),R5
+	LOD R10,(R2+16)
+	STO (R2+44),R10
 
 	# call PRINTN
 	STO (R2+48),R2
@@ -155,8 +160,8 @@ main:
 	JMP PRINTN
 
 	# actual L2
-	LOD R5,L2
-	STO (R2+44),R5
+	LOD R7,L2
+	STO (R2+44),R7
 
 	# call PRINTS
 	STO (R2+48),R2
@@ -166,8 +171,8 @@ main:
 	JMP PRINTS
 
 	# actual L5
-	LOD R5,L5
-	STO (R2+44),R5
+	LOD R7,L5
+	STO (R2+44),R7
 
 	# call PRINTS
 	STO (R2+48),R2
@@ -177,8 +182,8 @@ main:
 	JMP PRINTS
 
 	# actual l
-	LOD R5,(R2+20)
-	STO (R2+44),R5
+	LOD R11,(R2+20)
+	STO (R2+44),R11
 
 	# call PRINTN
 	STO (R2+48),R2
@@ -188,8 +193,8 @@ main:
 	JMP PRINTN
 
 	# actual L2
-	LOD R5,L2
-	STO (R2+44),R5
+	LOD R6,L2
+	STO (R2+44),R6
 
 	# call PRINTS
 	STO (R2+48),R2
@@ -199,8 +204,8 @@ main:
 	JMP PRINTS
 
 	# actual L6
-	LOD R5,L6
-	STO (R2+44),R5
+	LOD R6,L6
+	STO (R2+44),R6
 
 	# call PRINTS
 	STO (R2+48),R2
@@ -210,8 +215,8 @@ main:
 	JMP PRINTS
 
 	# actual m
-	LOD R5,(R2+24)
-	STO (R2+44),R5
+	LOD R9,(R2+24)
+	STO (R2+44),R9
 
 	# call PRINTN
 	STO (R2+48),R2
@@ -221,8 +226,8 @@ main:
 	JMP PRINTN
 
 	# actual L2
-	LOD R5,L2
-	STO (R2+44),R5
+	LOD R11,L2
+	STO (R2+44),R11
 
 	# call PRINTS
 	STO (R2+48),R2

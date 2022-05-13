@@ -1,6 +1,7 @@
 {
   "makefile.extensionOutputFolder": "./.vscode",
   "files.associations": {
-    "stack": "cpp"
+    "stack": "cpp",
+    "stdlib.h": "c"
   }
 }
