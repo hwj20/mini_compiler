@@ -5,93 +5,84 @@
 #include "obj.h"
 #include "myRegAllocation.h"
 
-void clear(Stack s)
+// a simple stack algorithm, but not uesed
+void clear(Stack *s)
 {
-	s.top = 0;
+	s->top = 0;
 };
-int pop(Stack s)
+int pop(Stack *s)
 {
-	return s.arr[s.top--];
+	return s->arr[s->top--];
 };
-void push(Stack s, int val)
+void push(Stack *s, int val)
 {
-	s.arr[++s.top] = val;
+	s->arr[++s->top] = val;
 };
 
 void asm_bin(char *op, SYM *a, SYM *b, SYM *c)
 {
-	int reg1 = get_first_reg(b);		/* Result register */
+	int reg1 = get_first_reg(b); /* Result register */
+	// TODO reduce register cost
 	int reg2 = get_second_reg(c, reg1); /* One more register */
 
-	printf("	%s R%u,R%u\n", op, reg1, reg2);
+	printf("	%s x%u,x%u,x%u\n", op, reg1, reg1, reg2);
 
 	/* Delete c from the descriptors and insert a */
 	clear_desc(reg1);
 	insert_desc(reg1, a, MODIFIED);
 }
 
+int cmp_label_count = 0;
+int func_var_count[1000], func_para_count[1000], func_var_top = 0, func_para_top = 0, now_func_num = 0;
 void asm_cmp(int op, SYM *a, SYM *b, SYM *c)
 {
 	int reg1 = get_first_reg(b);		/* Result register */
 	int reg2 = get_second_reg(c, reg1); /* One more register */
 
-	printf("	SUB R%u,R%u\n", reg1, reg2);
-	printf("	TST R%u\n", reg1);
+	printf("	SUB x%u,x%u,x%u\n", reg1, reg1, reg2);
+	printf("	CMP x%u, 0\n", reg1);
+
+	char tmp_label_1[100];
+	char tmp_label_2[100];
+	sprintf(tmp_label_1, "CMP_LABEL_%u_BEGIN", cmp_label_count);
+	sprintf(tmp_label_2, "CMP_LABEL_%u_END", cmp_label_count++);
 
 	switch (op)
 	{
 	case TAC_EQ:
-		printf("	LOD R3,R1+40\n");
-		printf("	JEZ R3\n");
-		printf("	LOD R%u,0\n", reg1);
-		printf("	LOD R3,R1+24\n");
-		printf("	JMP R3\n");
-		printf("	LOD R%u,1\n", reg1);
+		printf("	MOV x%u,0\n", reg1);
+		printf("	BNE %s\n", tmp_label_2);
+		printf("	MOV x%u,1 \n %s:\n", reg1, tmp_label_2);
 		break;
 
 	case TAC_NE:
-		printf("	LOD R3,R1+40\n");
-		printf("	JEZ R3\n");
-		printf("	LOD R%u,1\n", reg1);
-		printf("	LOD R3,R1+24\n");
-		printf("	JMP R3\n");
-		printf("	LOD R%u,0\n", reg1);
+		printf("	MOV x%u,0\n", reg1);
+		printf("	BEQ %s\n", tmp_label_2);
+		printf("	MOV x%u,1 \n %s:\n", reg1, tmp_label_2);
 		break;
 
 	case TAC_LT:
-		printf("	LOD R3,R1+40\n");
-		printf("	JLZ R3\n");
-		printf("	LOD R%u,0\n", reg1);
-		printf("	LOD R3,R1+24\n");
-		printf("	JMP R3\n");
-		printf("	LOD R%u,1\n", reg1);
+		printf("	MOV x%u,0\n", reg1);
+		printf("	BGE %s\n", tmp_label_2);
+		printf("	MOV x%u,1 \n %s:\n", reg1, tmp_label_2);
 		break;
 
 	case TAC_LE:
-		printf("	LOD R3,R1+40\n");
-		printf("	JGZ R3\n");
-		printf("	LOD R%u,1\n", reg1);
-		printf("	LOD R3,R1+24\n");
-		printf("	JMP R3\n");
-		printf("	LOD R%u,0\n", reg1);
+		printf("	MOV x%u,0\n", reg1);
+		printf("	BGT %s\n", tmp_label_2);
+		printf("	MOV x%u,1 \n %s:\n", reg1, tmp_label_2);
 		break;
 
 	case TAC_GT:
-		printf("	LOD R3,R1+40\n");
-		printf("	JGZ R3\n");
-		printf("	LOD R%u,0\n", reg1);
-		printf("	LOD R3,R1+24\n");
-		printf("	JMP R3\n");
-		printf("	LOD R%u,1\n", reg1);
+		printf("	MOV x%u,0\n", reg1);
+		printf("	BLE %s\n", tmp_label_2);
+		printf("	MOV x%u,1 \n %s:\n", reg1, tmp_label_2);
 		break;
 
 	case TAC_GE:
-		printf("	LOD R3,R1+40\n");
-		printf("	JLZ R3\n");
-		printf("	LOD R%u,1\n", reg1);
-		printf("	LOD R3,R1+24\n");
-		printf("	JMP R3\n");
-		printf("	LOD R%u,0\n", reg1);
+		printf("	MOV x%u,0\n", reg1);
+		printf("	BLT %s\n", tmp_label_2);
+		printf("	MOV x%u,1 \n %s:\n", reg1, tmp_label_2);
 		break;
 	}
 
@@ -106,8 +97,9 @@ void asm_copy(SYM *a, SYM *b)
 	int reg2 = get_second_val_reg(a, reg1);
 	if (a->type == SYM_ADDR)
 	{
-		printf("	LOD R%u, R%u\n", R_TEMP, reg2);
-		printf("	STO (R%u), R%u\n", R_TEMP, reg1);
+		printf("	MOV x%u, x%u\n", ARM_TMP, reg2);
+		// printf("	STO (R%u), x%u\n", R_TEMP, reg1);
+		printf("	STR x%u, [x%u]\n", reg1, ARM_TMP);
 	}
 	else
 		insert_desc(reg1, a, MODIFIED); /* Indicate a is there */
@@ -115,22 +107,22 @@ void asm_copy(SYM *a, SYM *b)
 
 void asm_cond(char *op, SYM *a, char *l)
 {
-	spill_all();
+	// spill_all();
 
 	if (a != NULL)
 	{
 		int r;
 
-		for (r = R_GEN; r < R_NUM; r++) /* Is it in reg? */
+		for (r = ARM_GEN; r < ARM_NUM; r++) /* Is it in reg? */
 		{
 			if (rdesc[r].var == a)
 				break;
 		}
 
-		if (r < R_NUM)
-			printf("	TST R%u\n", r);
+		if (r < ARM_NUM)
+			printf("	CMP x%u, 0\n", r);
 		else
-			printf("	TST R%u\n", get_first_reg(a)); /* Load into new register */
+			printf("	CMP x%u, 0\n", get_first_reg(a)); /* Load into new register */
 	}
 
 	printf("	%s %s\n", op, l);
@@ -140,87 +132,24 @@ void asm_return(SYM *a)
 {
 	if (a != NULL) /* return value */
 	{
-		spill_one(R_TP);
-		load_reg(R_TP, a);
+		spill_one(ARM_TMP);
+		load_reg(ARM_TMP, a);
+		return;
 	}
 
-	printf("	LOD R3,(R2+4)\n"); /* return address */
-	printf("	LOD R2,(R2)\n");   /* restore bp */
-	printf("	JMP R3\n");		   /* return */
+	int return_offset = pop(&my_stack);
+	// printf("	LDR x%u,[%s+4]\n", ARM_TMP, ARM_SP); /* return address */
+	printf("	LDP x%u, x%u, [%s], %u\n", ARM_FP, ARM_LR, ARM_SP, return_offset);
+	printf("	ret \n"); /* return */
 }
-
-void asm_head()
-{
-	char head[] =
-		"	# head\n"
-		"	LOD R2,STACK\n"
-		"	STO (R2),0\n"
-		"	LOD R4,EXIT\n"
-		"	STO (R2+4),R4";
-
-	puts(head);
-}
-
-void asm_lib()
-{
-	char lib[] =
-		"\nPRINTN:\n"
-		"	LOD R7,(R2-4) # 789\n"
-		"	LOD R15,R7 # 789 \n"
-		"	DIV R7,10 # 78\n"
-		"	TST R7\n"
-		"	JEZ PRINTDIGIT\n"
-		"	LOD R8,R7 # 78\n"
-		"	MUL R8,10 # 780\n"
-		"	SUB R15,R8 # 9\n"
-		"	STO (R2+8),R15 # local 9 store\n"
-		"\n	# out 78\n"
-		"	STO (R2+12),R7 # actual 78 push\n"
-		"\n	# call PRINTN\n"
-		"	STO (R2+16),R2\n"
-		"	LOD R4,R1+32\n"
-		"	STO (R2+20),R4\n"
-		"	LOD R2,R2+16\n"
-		"	JMP PRINTN\n"
-		"\n	# out 9\n"
-		"	LOD R15,(R2+8) # local 9 \n"
-		"\nPRINTDIGIT:\n"
-		"	ADD  R15,48\n"
-		"	OUT\n"
-		"\n	# ret\n"
-		"	LOD R3,(R2+4)\n"
-		"	LOD R2,(R2)\n"
-		"	JMP R3\n"
-		"\nPRINTS:\n"
-		"	LOD R7,(R2-4)\n"
-		"\nPRINTC:\n"
-		"	LOD R15,(R7)\n"
-		"	DIV R15,16777216\n"
-		"	TST R15\n"
-		"	JEZ PRINTSEND\n"
-		"	OUT\n"
-		"	ADD R7,1\n"
-		"	JMP PRINTC\n"
-		"\nPRINTSEND:\n"
-		"	# ret\n"
-		"	LOD R3,(R2+4)\n"
-		"	LOD R2,(R2)\n"
-		"	JMP R3\n"
-
-		"\n"
-		"EXIT:\n"
-		"	END\n";
-
-	puts(lib);
-}
-
 void asm_str(SYM *s)
 {
 	char *t = s->name; /* The text */
 	int i;
 
+	printf(".section .rodata\n");
 	printf("L%u:\n", s->label); /* Label for the string */
-	printf("	DBS ");			/* Label for the string */
+	printf("	.asciz \"");	/* Label for the string */
 
 	for (i = 1; t[i + 1] != 0; i++)
 	{
@@ -229,24 +158,23 @@ void asm_str(SYM *s)
 			switch (t[++i])
 			{
 			case 'n':
-				printf("%u,", '\n');
+				printf("%c,", '\n');
 				break;
 
 			case '\"':
-				printf("%u,", '\"');
+				printf("%c,", '\"');
 				break;
 			}
 		}
 		else
-			printf("%u,", t[i]);
+			printf("%c", t[i]);
 	}
 
-	printf("0\n"); /* End of string */
+	printf("\"\n"); /* End of string */
 }
 
-void asm_static(void)
+void asm_head()
 {
-	int i;
 
 	SYM *sl;
 
@@ -255,15 +183,50 @@ void asm_static(void)
 		if (sl->type == SYM_TEXT)
 			asm_str(sl);
 	}
+	char head[] =
+		"	# head\n"
+		".text\n"
+		".type main, %function\n"
+		".global main\n";
 
-	printf("STATIC:\n");
-	printf("	DBN 0,%u\n", tos);
-	printf("STACK:\n");
+	puts(head);
 }
 
+void asm_lib()
+{
+	char lib[] =
+		"\nPRINTS:\n"
+		"	STP x29,x30, [sp,-16]!\n"
+		"	ADD x29,sp,16\n"
+		"	LDR x0,[x29,8]\n"
+		"	bl printf\n"
+		"	LDP x29,x30, [sp], 16\n"
+		"	ret"
+		""
+
+		"\n"
+		"EXIT:\n"
+		"	ret\n";
+
+	puts(lib);
+}
+
+void asm_static(void)
+{
+	int i;
+
+	printf("STATIC:\n");
+	printf("	.8byte 0");
+	for (int i = 0; i < static_offset; i++)
+		printf(",0 ");
+	printf("\n");
+}
+
+int call_label_count = 0;
 void asm_code(TAC *c)
 {
 	int r;
+	int saved_para;
 
 	switch (c->op)
 	{
@@ -305,11 +268,11 @@ void asm_code(TAC *c)
 		return;
 
 	case TAC_GOTO:
-		asm_cond("JMP", NULL, c->a->name);
+		asm_cond("B", NULL, c->a->name);
 		return;
 
 	case TAC_IFZ:
-		asm_cond("JEZ", c->b, c->a->name);
+		asm_cond("BEQ", c->b, c->a->name);
 		return;
 
 	case TAC_LABEL:
@@ -319,63 +282,80 @@ void asm_code(TAC *c)
 
 	case TAC_ACTUAL:
 		r = get_first_reg(c->a);
-		printf("	STO (R2+%d),R%u\n", tof + oon, r);
-		oon += 4;
-		// printf("===%d----\n", c->a->offset);
+		// printf("	MOV x%u, %s\n",ARM_TMP, ARM_SP);
+
+		para_offset += 8;
+		printf("	STR x%u, [%s,-%d]\n", r, ARM_SP, para_offset);
+		// printf("%d\n", para_offset);
 		return;
 	case TAC_ACTUAL_ADDR:
-		printf("	LOD R%u,R2+%u\n", R_TEMP, c->a->offset);
-		printf("	STO (R2+%d),R%u\n", tof + oon, R_TEMP);
-		oon += 4;
+		para_offset += 8;
+		printf("	ADD x%u, x%u,%d\n", ARM_TMP, ARM_FP, c->a->offset);
+		printf("	STR x%u, [%s,-%d]\n", ARM_TMP, ARM_SP, para_offset);
 		return;
 
 	case TAC_CALL:
 		flush_all();
-		printf("	STO (R2+%d),R2\n", tof + oon); /* store old bp */
-		oon += 4;
-		printf("	LOD R4,R1+32\n");			   /* return addr: 4*8=32 */
-		printf("	STO (R2+%d),R4\n", tof + oon); /* store return addr */
-		oon += 4;
-		printf("	LOD R2,R2+%d\n", tof + oon - 8); /* load new bp */
-		printf("	JMP %s\n", (char *)c->b);		 /* jump to new func */
+		// char call_label[100];
+		// sprintf(call_label, "CALL_LABEL_%u", call_label_count++);
+		// oon += 4;
+		// printf("	MOV x%u,%s,32\n", ARM_TMP, ARM_PC); /* return addr: 4*8=32 */
+		// printf("	STO (R2+%d),R4\n", tof + oon); /* store return addr */
+		// printf("	STO x%u, [%s+%d]\n", ARM_TMP, ARM_SP, tof + oon); /* store return addr */
+		// oon += 4;
+		printf("	SUB %s,%s,%d\n", ARM_SP, ARM_SP, para_offset + (para_offset % 16)); /* load new bp */
+		printf("	BL %s\n", (char *)c->b);											/* jump to new func */
+		printf("	ADD %s,%s,%d\n", ARM_SP, ARM_SP, para_offset + (para_offset % 16)); /* load new bp */
+		// printf("%s\n", call_label);
+		// push(my_stack, call_label);
 		if (c->a != NULL)
-			insert_desc(R_TP, c->a, MODIFIED);
-		oon = 0;
+			insert_desc(ARM_TMP, c->a, MODIFIED);
+		para_offset = 0;
+
 		return;
 
 	case TAC_BEGINFUNC:
 		/* We reset the top of stack, since it is currently empty apart from the link information. */
 		scope_local = 1;
-		tof = LOCAL_OFF;
-		oof = FORMAL_OFF;
-		oon = 0;
+		// tof = LOCAL_OFF;
+		// oof = FORMAL_OFF;
+		// oon = 0;
+		before_frame = (func_para_count[++now_func_num] % 2) * 8;
+		frame_top = 0;
+		local_offset = 0;
+		int scope_offset = func_var_count[now_func_num] * 8 + 16;
+		scope_offset += (scope_offset % 16); // alingn to 16
+		push(&my_stack, scope_offset);
+		printf("	STP x%u, x%u, [%s, -%d]!\n", ARM_FP, ARM_LR, ARM_SP, scope_offset);
+		printf("	ADD x%u, %s, %d\n", ARM_FP, ARM_SP, scope_offset); // change FP as the top frame addr
+
 		return;
 
 	case TAC_FORMAL:
 		c->a->store = 1; /* parameter is special local var */
-		c->a->offset = oof;
-		oof -= 4;
+		c->a->offset = before_frame;
+		before_frame -= 8;
 		return;
 
 	case TAC_FORMAL_ADDR:
 		c->a->store = 1; /* parameter is special local var */
-		c->a->offset = oof;
+		c->a->offset = before_frame;
 		c->a->type = SYM_ADDR;
-		oof -= 4;
+		before_frame -= 8;
 		return;
 
 	case TAC_VAR:
 		if (scope_local)
 		{
 			c->a->store = 1; /* local var */
-			c->a->offset = tof;
-			tof += 4;
+			c->a->offset = local_offset;
+			local_offset += 8;
 		}
 		else
 		{
 			c->a->store = 0; /* global var */
-			c->a->offset = tos;
-			tos += 4;
+			c->a->offset = static_offset;
+			static_offset += 8;
 		}
 		return;
 
@@ -396,22 +376,54 @@ void asm_code(TAC *c)
 	}
 }
 
+void asm_pre(TAC *c)
+{
+	switch (c->op)
+	{
+	case TAC_BEGINFUNC /* constant-expression */:
+		/* code */
+		func_var_count[++func_var_top] = 0;
+		func_para_count[++func_para_top] = 0;
+		break;
+	case TAC_VAR:
+		func_var_count[func_var_top]++;
+		break;
+	case TAC_FORMAL:
+		func_para_count[func_para_top]++;
+		break;
+	default:
+		break;
+	}
+}
+
 void tac_obj()
 {
-	tof = LOCAL_OFF; /* TOS allows space for link info */
-	oof = FORMAL_OFF;
-	oon = 0;
-	gfs = 0;
-	clear(my_stack);
+	// tof = LOCAL_OFF; /* TOS allows space for link info */
+	// oof = FORMAL_OFF;
+	// oon = 0;
+	// gfs = 0;
+	para_offset = 0;
+	frame_top = 0;
+	before_frame = 0;
+	local_offset = 0;
+	static_offset = 0;
+	call_label_count = 0;
+	cmp_label_count = 0;
+	clear(&my_stack);
 
 	int r;
-	for (r = 0; r < R_NUM; r++)
+	for (r = 0; r < ARM_NUM; r++)
 		rdesc[r].var = NULL;				 // define register desc
 	insert_desc(0, mk_const(0), UNMODIFIED); /* R0 holds 0 */
 
 	asm_head();
 
 	TAC *cur;
+	// preprocess the var in  func
+	for (cur = tac_first; cur != NULL; cur = cur->next)
+	{
+		asm_pre(cur);
+	}
 	for (cur = tac_first; cur != NULL; cur = cur->next)
 	{
 		printf("\n	# ");

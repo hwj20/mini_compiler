@@ -19,11 +19,19 @@
 #define MODIFIED 1
 #define UNMODIFIED 0
 
+#define ARM_PC "PC"
+#define ARM_SP "sp"
+#define ARM_LR 30
+#define ARM_FP 29
+#define ARM_TMP 0 // TODO bad for efficiency or lead to some bugs
+#define ARM_GEN 1
+#define ARM_NUM 29
+
 struct rdesc /* Reg descriptor */
 {
 	struct sym *var; /* Variable in reg */
 	int modified;	 /* If needs spilling */
-} rdesc[R_NUM];
+} rdesc[32];
 
 typedef struct Stack
 {
@@ -31,11 +39,11 @@ typedef struct Stack
 	int arr[100];
 } Stack;
 
-int tos; /* top of static */
-int tof; /* top of frame */
-int oof; /* offset of formal */
-int oon; /* offset of next frame */
-int gfs;
+int para_offset;   // for actual tac
+int frame_top;	   // top of frame
+int before_frame;  // for formal tac
+int local_offset;  // for local var
+int static_offset; // for static var
 
 Stack my_stack;
 

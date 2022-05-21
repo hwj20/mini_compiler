@@ -1,13 +1,27 @@
+.section .rodata
+L7:
+	.asciz "wrong 4"
+.section .rodata
+L5:
+	.asciz "pass 3"
+.section .rodata
+L3:
+	.asciz "pass 2"
+.section .rodata
+L1:
+	.asciz "pass 1"
 	# head
-	LOD R2,STACK
-	STO (R2),0
-	LOD R4,EXIT
-	STO (R2+4),R4
+.text
+.type main, %function
+.global main
+
 
 	# label main
 main:
 
 	# begin
+	STP x29, x30, [sp, -80]!
+	ADD x29, sp, 80
 
 	# var i
 
@@ -16,124 +30,156 @@ main:
 	# var c
 
 	# i = 1
-	LOD R5,1
+	MOV x1,1
+	LDR x2,[x29,0]
 
-	# j = 1
-	LOD R6,1
+	# j = 2
+	MOV x2,2
+	LDR x3,[x29,-8]
 
-	# c = 1
-	LOD R7,1
+	# c = 3
+	MOV x3,3
+	LDR x4,[x29,-16]
 
 	# var t0
 
-	# t0 = (i == j)
-	STO (R2+8),R5
-	SUB R5,R6
-	TST R5
-	LOD R3,R1+40				// r1-- pc
-	JEZ R3
-	LOD R5,0
-	LOD R3,R1+24
-	JMP R3
-	LOD R5,1
+	# t0 = (i < j)
+	STR x1, [x29,0]
+	SUB x1,x1,x2
+	CMP x1, 0
+	MOV x1,0
+	BGE CMP_LABEL_0_END
+	MOV x1,1 
+ CMP_LABEL_0_END:
 
-	# ifz t0 goto L1
-	STO (R2+20),R5
-	STO (R2+12),R6
-	STO (R2+16),R7
-	TST R5
-	JEZ L1
+	# ifz t0 goto L2
+	CMP x1, 0
+	BEQ L2
 
-	# j = 2
-	LOD R8,2
+	# actual L1
+	ADR x4,L1
+	STR x4, [sp,-8]
 
-	# i = 1
-	LOD R6,1
-
-	# goto L2
-	STO (R2+8),R6
-	STO (R2+12),R8
-	JMP L2
-
-	# label L1
-L1:
-
-	# actual i
-	LOD R5,(R2+8)
-	STO (R2+24),R5		// i -- parameter
-
-	# call PRINTN
-	STO (R2+28),R2
-	LOD R4,R1+32
-	STO (R2+32),R4
-	LOD R2,R2+28
-	JMP PRINTN
+	# call PRINTS
+	STR x1, [x29,-24]
+	STR x2, [x29,-8]
+	STR x3, [x29,-16]
+	SUB sp,sp,16
+	BL PRINTS
+	ADD sp,sp,16
 
 	# label L2
 L2:
 
+	# var t1
+
+	# t1 = (i <= j)
+	LDR x1,[x29,0]
+	LDR x2,[x29,-8]
+	SUB x1,x1,x2
+	CMP x1, 0
+	MOV x1,0
+	BGT CMP_LABEL_1_END
+	MOV x1,1 
+ CMP_LABEL_1_END:
+
+	# ifz t1 goto L4
+	CMP x1, 0
+	BEQ L4
+
+	# actual L3
+	ADR x3,L3
+	STR x3, [sp,-8]
+
+	# call PRINTS
+	STR x1, [x29,-32]
+	SUB sp,sp,16
+	BL PRINTS
+	ADD sp,sp,16
+
+	# label L4
+L4:
+
+	# var t2
+
+	# t2 = (c > i)
+	LDR x1,[x29,-16]
+	LDR x2,[x29,0]
+	SUB x1,x1,x2
+	CMP x1, 0
+	MOV x1,0
+	BLE CMP_LABEL_2_END
+	MOV x1,1 
+ CMP_LABEL_2_END:
+
+	# ifz t2 goto L6
+	CMP x1, 0
+	BEQ L6
+
+	# actual L5
+	ADR x3,L5
+	STR x3, [sp,-8]
+
+	# call PRINTS
+	STR x1, [x29,-40]
+	SUB sp,sp,16
+	BL PRINTS
+	ADD sp,sp,16
+
+	# i = 4
+	MOV x1,4
+	LDR x2,[x29,0]
+
+	# label L6
+	STR x1, [x29,0]
+L6:
+
+	# var t3
+
+	# t3 = (c >= i)
+	LDR x1,[x29,-16]
+	LDR x2,[x29,0]
+	SUB x1,x1,x2
+	CMP x1, 0
+	MOV x1,0
+	BLT CMP_LABEL_3_END
+	MOV x1,1 
+ CMP_LABEL_3_END:
+
+	# ifz t3 goto L8
+	CMP x1, 0
+	BEQ L8
+
+	# actual L7
+	ADR x3,L7
+	STR x3, [sp,-8]
+
+	# call PRINTS
+	STR x1, [x29,-48]
+	SUB sp,sp,16
+	BL PRINTS
+	ADD sp,sp,16
+
+	# label L8
+L8:
+
 	# c = 2
-	LOD R5,2
+	MOV x1,2
+	LDR x2,[x29,-16]
 
 	# end
-	LOD R3,(R2+4)
-	LOD R2,(R2)
-	JMP R3
-
-PRINTN:
-	LOD R7,(R2-4) # 789
-	LOD R15,R7 # 789  		// r15--show reg
-	DIV R7,10 # 78
-	TST R7
-	JEZ PRINTDIGIT
-	LOD R8,R7 # 78
-	MUL R8,10 # 780
-	SUB R15,R8 # 9
-	STO (R2+8),R15 # local 9 store
-
-	# out 78
-	STO (R2+12),R7 # actual 78 push
-
-	# call PRINTN
-	STO (R2+16),R2
-	LOD R4,R1+32
-	STO (R2+20),R4
-	LOD R2,R2+16
-	JMP PRINTN
-
-	# out 9
-	LOD R15,(R2+8) # local 9 
-
-PRINTDIGIT:
-	ADD  R15,48
-	OUT					// about r15
-
-	# ret
-	LOD R3,(R2+4)
-	LOD R2,(R2)			// restore r2
-	JMP R3
+	LDP x29, x30, [sp], 80
+	ret 
 
 PRINTS:
-	LOD R7,(R2-4)
-
-PRINTC:
-	LOD R15,(R7)
-	DIV R15,16777216
-	TST R15
-	JEZ PRINTSEND
-	OUT
-	ADD R7,1
-	JMP PRINTC
-
-PRINTSEND:
-	# ret
-	LOD R3,(R2+4)
-	LOD R2,(R2)
-	JMP R3
-
+	STP x29,x30, [sp,-16]!
+	ADD x29,sp,16
+	LDR x0,[x29,8]
+	bl printf
+	LDP x29,x30, [sp], 16
+	ret
 EXIT:
-	END
+	ret
 
 STATIC:
-	DBN 0,0
-STACK:
+	.8byte 0
