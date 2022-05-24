@@ -9,7 +9,8 @@ L3:
 	.asciz "pass 2"
 .section .rodata
 L1:
-	.asciz "pass 1"
+	.asciz "pass 1
+,"
 	# head
 .text
 .type main, %function

@@ -6,7 +6,7 @@ main()
     c = 3;
     if(i < j)
     {
-        print("pass 1");
+        print("pass 1\n");
     }
     if(i <= j)
     {
