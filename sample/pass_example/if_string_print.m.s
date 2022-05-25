@@ -1,16 +1,14 @@
 .section .rodata
+L_PRINT_INT:
+ .string "%d\n" 
 L7:
-	.asciz "wrong 4"
-.section .rodata
+	.string "wrong 4"
 L5:
-	.asciz "pass 3"
-.section .rodata
+	.string "pass 3"
 L3:
-	.asciz "pass 2"
-.section .rodata
+	.string "pass 2"
 L1:
-	.asciz "pass 1
-,"
+	.string "pass "
 	# head
 .text
 .type main, %function
@@ -42,9 +40,9 @@ main:
 	MOV x3,3
 	LDR x4,[x29,-16]
 
-	# var t0
+	# var _t0
 
-	# t0 = (i < j)
+	# _t0 = (i < j)
 	STR x1, [x29,0]
 	SUB x1,x1,x2
 	CMP x1, 0
@@ -53,7 +51,10 @@ main:
 	MOV x1,1 
  CMP_LABEL_0_END:
 
-	# ifz t0 goto L2
+	# ifz _t0 goto L2
+	STR x1, [x29,-24]
+	STR x2, [x29,-8]
+	STR x3, [x29,-16]
 	CMP x1, 0
 	BEQ L2
 
@@ -62,19 +63,25 @@ main:
 	STR x4, [sp,-8]
 
 	# call PRINTS
-	STR x1, [x29,-24]
-	STR x2, [x29,-8]
-	STR x3, [x29,-16]
 	SUB sp,sp,16
 	BL PRINTS
+	ADD sp,sp,16
+
+	# actual i
+	LDR x1,[x29,0]
+	STR x1, [sp,-8]
+
+	# call PRINTN
+	SUB sp,sp,16
+	BL PRINTN
 	ADD sp,sp,16
 
 	# label L2
 L2:
 
-	# var t1
+	# var _t1
 
-	# t1 = (i <= j)
+	# _t1 = (i <= j)
 	LDR x1,[x29,0]
 	LDR x2,[x29,-8]
 	SUB x1,x1,x2
@@ -84,7 +91,8 @@ L2:
 	MOV x1,1 
  CMP_LABEL_1_END:
 
-	# ifz t1 goto L4
+	# ifz _t1 goto L4
+	STR x1, [x29,-32]
 	CMP x1, 0
 	BEQ L4
 
@@ -93,7 +101,6 @@ L2:
 	STR x3, [sp,-8]
 
 	# call PRINTS
-	STR x1, [x29,-32]
 	SUB sp,sp,16
 	BL PRINTS
 	ADD sp,sp,16
@@ -101,9 +108,9 @@ L2:
 	# label L4
 L4:
 
-	# var t2
+	# var _t2
 
-	# t2 = (c > i)
+	# _t2 = (c > i)
 	LDR x1,[x29,-16]
 	LDR x2,[x29,0]
 	SUB x1,x1,x2
@@ -113,7 +120,8 @@ L4:
 	MOV x1,1 
  CMP_LABEL_2_END:
 
-	# ifz t2 goto L6
+	# ifz _t2 goto L6
+	STR x1, [x29,-40]
 	CMP x1, 0
 	BEQ L6
 
@@ -122,7 +130,6 @@ L4:
 	STR x3, [sp,-8]
 
 	# call PRINTS
-	STR x1, [x29,-40]
 	SUB sp,sp,16
 	BL PRINTS
 	ADD sp,sp,16
@@ -135,9 +142,9 @@ L4:
 	STR x1, [x29,0]
 L6:
 
-	# var t3
+	# var _t3
 
-	# t3 = (c >= i)
+	# _t3 = (c >= i)
 	LDR x1,[x29,-16]
 	LDR x2,[x29,0]
 	SUB x1,x1,x2
@@ -147,7 +154,8 @@ L6:
 	MOV x1,1 
  CMP_LABEL_3_END:
 
-	# ifz t3 goto L8
+	# ifz _t3 goto L8
+	STR x1, [x29,-48]
 	CMP x1, 0
 	BEQ L8
 
@@ -156,7 +164,6 @@ L6:
 	STR x3, [sp,-8]
 
 	# call PRINTS
-	STR x1, [x29,-48]
 	SUB sp,sp,16
 	BL PRINTS
 	ADD sp,sp,16
@@ -172,6 +179,15 @@ L8:
 	LDP x29, x30, [sp], 80
 	ret 
 
+PRINTN:
+	STP x29,x30, [sp,-16]!
+	ADD x29,sp,16
+	LDR w1, [x29,8]
+	ADR x0, L_PRINT_INT
+	bl printf
+	LDP x29,x30, [sp], 16
+	ret
+
 PRINTS:
 	STP x29,x30, [sp,-16]!
 	ADD x29,sp,16
@@ -179,8 +195,10 @@ PRINTS:
 	bl printf
 	LDP x29,x30, [sp], 16
 	ret
+
 EXIT:
 	ret
 
+.section .data
 STATIC:
-	.8byte 0
+	.8byte 0,0 

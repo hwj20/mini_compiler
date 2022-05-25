@@ -22,18 +22,10 @@ void spill_one(int r)
         }
         else /* global var */
         {
-            if (rdesc[r].var->offset >= 0)
-            {
-                // printf("	LOD R%u,STATIC\n", R_TP);
-                // printf("	STO (R%u+%d),R%u\n", R_TP, rdesc[r].var->offset, r);
-                printf("    adr x%u, STATIC\n", ARM_TMP);
-                printf("    STR x%u, [x%u,%d]\n", r, ARM_TMP, rdesc[r].var->offset);
-            }
-            else
-            {
-                printf("    adr x%u, STATIC\n", ARM_TMP);
-                printf("    STR x%u, [x%u,%d]\n", r, ARM_TMP, -rdesc[r].var->offset);
-            }
+            // printf("	LOD R%u,STATIC\n", R_TP);
+            // printf("	STO (R%u+%d),R%u\n", R_TP, rdesc[r].var->offset, r);
+            printf("    adr x%u, STATIC\n", ARM_TMP);
+            printf("    STR x%u, [x%u,%d]\n", r, ARM_TMP, rdesc[r].var->offset);
         }
         rdesc[r].modified = UNMODIFIED;
     }

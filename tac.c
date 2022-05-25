@@ -158,7 +158,7 @@ SYM *mk_tmp(void)
 	char *name;
 
 	name = malloc(12);
-	sprintf(name, "t%d", next_tmp++); /* Set up text */
+	sprintf(name, "_t%d", next_tmp++); /* Set up text */
 	return mk_var(name);
 }
 

@@ -107,7 +107,7 @@ void asm_copy(SYM *a, SYM *b)
 
 void asm_cond(char *op, SYM *a, char *l)
 {
-	// spill_all();
+	spill_all();
 
 	if (a != NULL)
 	{
@@ -147,9 +147,8 @@ void asm_str(SYM *s)
 	char *t = s->name; /* The text */
 	int i;
 
-	printf(".section .rodata\n");
 	printf("L%u:\n", s->label); /* Label for the string */
-	printf("	.asciz \"");	/* Label for the string */
+	printf("	.string \"");	/* Label for the string */
 
 	for (i = 1; t[i + 1] != 0; i++)
 	{
@@ -172,11 +171,24 @@ void asm_str(SYM *s)
 
 	printf("\"\n"); /* End of string */
 }
+void asm_static(void)
+{
+	int i;
+
+	printf("STATIC:\n");
+	printf("	.8byte 0");
+	for (int i = 0; i < static_offset / 8; i++)
+		printf(",0 ");
+	printf("\n");
+}
 
 void asm_head()
 {
 
 	SYM *sl;
+
+	printf(".section .rodata\n");
+	printf("L_PRINT_INT:\n .string \"%%d\\n\" \n");
 
 	for (sl = sym_tab_global; sl != NULL; sl = sl->next)
 	{
@@ -195,13 +207,22 @@ void asm_head()
 void asm_lib()
 {
 	char lib[] =
+		"\nPRINTN:\n"
+		"	STP x29,x30, [sp,-16]!\n"
+		"	ADD x29,sp,16\n"
+		"	LDR w1, [x29,8]\n"
+		"	ADR x0, L_PRINT_INT\n"
+		"	bl printf\n"
+		"	LDP x29,x30, [sp], 16\n"
+		"	ret\n"
+		""
 		"\nPRINTS:\n"
 		"	STP x29,x30, [sp,-16]!\n"
 		"	ADD x29,sp,16\n"
 		"	LDR x0,[x29,8]\n"
 		"	bl printf\n"
 		"	LDP x29,x30, [sp], 16\n"
-		"	ret"
+		"	ret\n"
 		""
 
 		"\n"
@@ -209,17 +230,6 @@ void asm_lib()
 		"	ret\n";
 
 	puts(lib);
-}
-
-void asm_static(void)
-{
-	int i;
-
-	printf("STATIC:\n");
-	printf("	.8byte 0");
-	for (int i = 0; i < static_offset; i++)
-		printf(",0 ");
-	printf("\n");
 }
 
 int call_label_count = 0;
@@ -268,6 +278,8 @@ void asm_code(TAC *c)
 		return;
 
 	case TAC_GOTO:
+		// printf("spill all\n");
+		spill_all();
 		asm_cond("B", NULL, c->a->name);
 		return;
 
@@ -290,7 +302,7 @@ void asm_code(TAC *c)
 		return;
 	case TAC_ACTUAL_ADDR:
 		para_offset += 8;
-		printf("	ADD x%u, x%u,%d\n", ARM_TMP, ARM_FP, c->a->offset);
+		printf("	ADD x%u, x%u,%d\n", ARM_TMP, ARM_FP, -c->a->offset);
 		printf("	STR x%u, [%s,-%d]\n", ARM_TMP, ARM_SP, para_offset);
 		return;
 
@@ -317,14 +329,11 @@ void asm_code(TAC *c)
 	case TAC_BEGINFUNC:
 		/* We reset the top of stack, since it is currently empty apart from the link information. */
 		scope_local = 1;
-		// tof = LOCAL_OFF;
-		// oof = FORMAL_OFF;
-		// oon = 0;
 		before_frame = (func_para_count[++now_func_num] % 2) * 8;
 		frame_top = 0;
 		local_offset = 0;
-		int scope_offset = func_var_count[now_func_num] * 8 + 16;
-		scope_offset += (scope_offset % 16); // alingn to 16
+		int scope_offset = func_var_count[now_func_num] * 8 + 16; // the space for var and fp, return addr
+		scope_offset += (scope_offset % 16);					  // align to 16
 		push(&my_stack, scope_offset);
 		printf("	STP x%u, x%u, [%s, -%d]!\n", ARM_FP, ARM_LR, ARM_SP, scope_offset);
 		printf("	ADD x%u, %s, %d\n", ARM_FP, ARM_SP, scope_offset); // change FP as the top frame addr
@@ -333,18 +342,22 @@ void asm_code(TAC *c)
 
 	case TAC_FORMAL:
 		c->a->store = 1; /* parameter is special local var */
-		c->a->offset = before_frame;
-		before_frame -= 8;
+		c->a->offset = -before_frame;
+		before_frame += 8;
 		return;
 
 	case TAC_FORMAL_ADDR:
 		c->a->store = 1; /* parameter is special local var */
-		c->a->offset = before_frame;
+		c->a->offset = -before_frame;
 		c->a->type = SYM_ADDR;
-		before_frame -= 8;
+		before_frame += 8;
 		return;
 
 	case TAC_VAR:
+		// if (c->a->name[0] == '_' && c->a->name[1] == 't')
+		// {
+		// 	return;
+		// }
 		if (scope_local)
 		{
 			c->a->store = 1; /* local var */
@@ -386,8 +399,13 @@ void asm_pre(TAC *c)
 		func_para_count[++func_para_top] = 0;
 		break;
 	case TAC_VAR:
+		// if (c->a->name[0] == '_' && c->a->name[1] == 't')
+		// {
+		// 	return;
+		// }
 		func_var_count[func_var_top]++;
 		break;
+	case TAC_FORMAL_ADDR:
 	case TAC_FORMAL:
 		func_para_count[func_para_top]++;
 		break;
@@ -398,15 +416,11 @@ void asm_pre(TAC *c)
 
 void tac_obj()
 {
-	// tof = LOCAL_OFF; /* TOS allows space for link info */
-	// oof = FORMAL_OFF;
-	// oon = 0;
-	// gfs = 0;
 	para_offset = 0;
 	frame_top = 0;
 	before_frame = 0;
 	local_offset = 0;
-	static_offset = 0;
+	static_offset = 8;
 	call_label_count = 0;
 	cmp_label_count = 0;
 	clear(&my_stack);
@@ -432,5 +446,6 @@ void tac_obj()
 		asm_code(cur);
 	}
 	asm_lib();
+	printf(".section .data\n");
 	asm_static();
 }
