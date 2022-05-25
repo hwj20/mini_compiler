@@ -4,12 +4,12 @@ main()
 	l=1;
 	m=2;
 	n=3;
-	print(l,m,n);
+	print(l,&m,n);
 	n=func(l,m,n);
 	print(l,m,n);
 }
 
-func(o,p,q)
+func(o,&p,q)
 {
     p = o+q;
 	o = p;
