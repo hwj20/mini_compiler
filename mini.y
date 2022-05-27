@@ -333,7 +333,7 @@ int main(int argc,   char *argv[])
 		return 0;
 	}
 
-	output=(char *)malloc(strlen(input + 10));
+	output=(char *)malloc(strlen(input)+10);
 	strcpy(output,input);
 	strcat(output,".s");
 

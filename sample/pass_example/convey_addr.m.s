@@ -67,13 +67,13 @@ main:
 	LDR x1,[x29,-16]
 	STR x1, [sp,-8]
 
-	# actual m
-	LDR x2,[x29,-8]
-	STR x2, [sp,-16]
+	# actual_addr m
+	ADD x0, x29,-8
+	STR x0, [sp,-16]
 
 	# actual l
-	LDR x3,[x29,0]
-	STR x3, [sp,-24]
+	LDR x2,[x29,0]
+	STR x2, [sp,-24]
 
 	# _t0 = call func
 	SUB sp,sp,32
@@ -125,7 +125,7 @@ func:
 
 	# formal o
 
-	# formal p
+	# formal_addr p
 
 	# formal q
 
@@ -139,14 +139,16 @@ func:
 	# p = _t1
 	STR x1, [x29,0]
 	LDR x3,[x29,16]
+	MOV x0, x3
+	STR x1, [x0]
 
 	# o = p
-	STR x1, [x29,16]
-	LDR x3,[x29,8]
+	LDR x3, [x3]
+	LDR x4,[x29,8]
 
 	# actual o
-	STR x1, [x29,8]
-	STR x1, [sp,-8]
+	STR x3, [x29,8]
+	STR x3, [sp,-8]
 
 	# call PRINTN
 	SUB sp,sp,16
@@ -155,6 +157,7 @@ func:
 
 	# actual p
 	LDR x1,[x29,16]
+	LDR x1, [x1]
 	STR x1, [sp,-8]
 
 	# call PRINTN
