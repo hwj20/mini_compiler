@@ -331,7 +331,7 @@ void asm_code(TAC *c)
 		scope_local = 1;
 		before_frame = (func_para_count[++now_func_num] % 2) * 8;
 		frame_top = 0;
-		local_offset = 0;
+		local_offset = 8;
 		int scope_offset = func_var_count[now_func_num] * 8 + 16; // the space for var and fp, return addr
 		scope_offset += (scope_offset % 16);					  // align to 16
 		push(&my_stack, scope_offset);
@@ -419,7 +419,7 @@ void tac_obj()
 	para_offset = 0;
 	frame_top = 0;
 	before_frame = 0;
-	local_offset = 0;
+	local_offset = 8;
 	static_offset = 8;
 	call_label_count = 0;
 	cmp_label_count = 0;

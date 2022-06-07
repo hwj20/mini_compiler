@@ -30,20 +30,20 @@ main:
 
 	# i = 1
 	MOV x1,1
-	LDR x2,[x29,0]
+	LDR x2,[x29,-8]
 
 	# j = 2
 	MOV x2,2
-	LDR x3,[x29,-8]
+	LDR x3,[x29,-16]
 
 	# c = 3
 	MOV x3,3
-	LDR x4,[x29,-16]
+	LDR x4,[x29,-24]
 
 	# var _t0
 
 	# _t0 = (i < j)
-	STR x1, [x29,0]
+	STR x1, [x29,-8]
 	SUB x1,x1,x2
 	CMP x1, 0
 	MOV x1,0
@@ -52,9 +52,9 @@ main:
  CMP_LABEL_0_END:
 
 	# ifz _t0 goto L2
-	STR x1, [x29,-24]
-	STR x2, [x29,-8]
-	STR x3, [x29,-16]
+	STR x1, [x29,-32]
+	STR x2, [x29,-16]
+	STR x3, [x29,-24]
 	CMP x1, 0
 	BEQ L2
 
@@ -68,7 +68,7 @@ main:
 	ADD sp,sp,16
 
 	# actual i
-	LDR x1,[x29,0]
+	LDR x1,[x29,-8]
 	STR x1, [sp,-8]
 
 	# call PRINTN
@@ -82,8 +82,8 @@ L2:
 	# var _t1
 
 	# _t1 = (i <= j)
-	LDR x1,[x29,0]
-	LDR x2,[x29,-8]
+	LDR x1,[x29,-8]
+	LDR x2,[x29,-16]
 	SUB x1,x1,x2
 	CMP x1, 0
 	MOV x1,0
@@ -92,7 +92,7 @@ L2:
  CMP_LABEL_1_END:
 
 	# ifz _t1 goto L4
-	STR x1, [x29,-32]
+	STR x1, [x29,-40]
 	CMP x1, 0
 	BEQ L4
 
@@ -111,8 +111,8 @@ L4:
 	# var _t2
 
 	# _t2 = (c > i)
-	LDR x1,[x29,-16]
-	LDR x2,[x29,0]
+	LDR x1,[x29,-24]
+	LDR x2,[x29,-8]
 	SUB x1,x1,x2
 	CMP x1, 0
 	MOV x1,0
@@ -121,7 +121,7 @@ L4:
  CMP_LABEL_2_END:
 
 	# ifz _t2 goto L6
-	STR x1, [x29,-40]
+	STR x1, [x29,-48]
 	CMP x1, 0
 	BEQ L6
 
@@ -136,17 +136,17 @@ L4:
 
 	# i = 4
 	MOV x1,4
-	LDR x2,[x29,0]
+	LDR x2,[x29,-8]
 
 	# label L6
-	STR x1, [x29,0]
+	STR x1, [x29,-8]
 L6:
 
 	# var _t3
 
 	# _t3 = (c >= i)
-	LDR x1,[x29,-16]
-	LDR x2,[x29,0]
+	LDR x1,[x29,-24]
+	LDR x2,[x29,-8]
 	SUB x1,x1,x2
 	CMP x1, 0
 	MOV x1,0
@@ -155,7 +155,7 @@ L6:
  CMP_LABEL_3_END:
 
 	# ifz _t3 goto L8
-	STR x1, [x29,-48]
+	STR x1, [x29,-56]
 	CMP x1, 0
 	BEQ L8
 
@@ -173,7 +173,7 @@ L8:
 
 	# c = 2
 	MOV x1,2
-	LDR x2,[x29,-16]
+	LDR x2,[x29,-24]
 
 	# end
 	LDP x29, x30, [sp], 80

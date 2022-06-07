@@ -20,16 +20,16 @@ main:
 
 	# i = 1
 	MOV x1,1
-	LDR x2,[x29,0]
+	LDR x2,[x29,-8]
 
 	# label L2
-	STR x1, [x29,0]
+	STR x1, [x29,-8]
 L2:
 
 	# var _t0
 
 	# _t0 = (i < 10)
-	LDR x1,[x29,0]
+	LDR x1,[x29,-8]
 	MOV x2,10
 	SUB x1,x1,x2
 	CMP x1, 0
@@ -39,7 +39,7 @@ L2:
  CMP_LABEL_0_END:
 
 	# ifz _t0 goto L3
-	STR x1, [x29,-8]
+	STR x1, [x29,-16]
 	CMP x1, 0
 	BEQ L3
 
@@ -53,7 +53,7 @@ L2:
 	ADD sp,sp,16
 
 	# actual i
-	LDR x1,[x29,0]
+	LDR x1,[x29,-8]
 	STR x1, [sp,-8]
 
 	# call PRINTN
@@ -64,16 +64,16 @@ L2:
 	# var _t1
 
 	# _t1 = i + 1
-	LDR x1,[x29,0]
+	LDR x1,[x29,-8]
 	MOV x2,1
 	ADD x1,x1,x2
 
 	# i = _t1
-	STR x1, [x29,-16]
-	LDR x3,[x29,0]
+	STR x1, [x29,-24]
+	LDR x3,[x29,-8]
 
 	# goto L2
-	STR x1, [x29,0]
+	STR x1, [x29,-8]
 	B L2
 
 	# label L3
