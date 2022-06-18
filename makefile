@@ -1,7 +1,7 @@
 CC := gcc
 Source := obj.c myRegAllocation.c tac.c
 
-all: mini asm machine
+all: mini asm machine other
 
 mini: mini.l mini.y tac.c tac.h obj.c obj.h myRegAllocation.h myRegAllocation.c
 	lex -o mini.l.c mini.l
@@ -15,6 +15,11 @@ asm: asm.l asm.y opcode.h
 
 machine: machine.c opcode.h
 	$(CC) -g3 machine.c -o machine
+
+other: mini
+	rm sample/mini
+	cp mini sample/mini
+	cd sample
 
 clean:
 	rm -fr *.l.* *.y.* mini asm machine

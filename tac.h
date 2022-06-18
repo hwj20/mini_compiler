@@ -76,11 +76,12 @@ typedef struct exp /* Parser expression */
 } EXP;
 
 /* global var */
-int yylineno, scope_local, next_tmp, next_label;
+int yylineno, scope_local, next_tmp,tmp_max,next_label;  //tmp_max : the count of _t that is already defined
 SYM *sym_tab_global, *sym_tab_local;
 TAC *tac_first, *tac_last;
 
 /* function */
+void tmp_init();
 void tac_init();
 void tac_complete();
 void tac_dump();

@@ -4,13 +4,21 @@
 #include <ctype.h>
 #include "tac.h"
 
+#define max(a,b) ((a)>(b))?(a):(b)
+
 void tac_init()
 {
 	scope_local = 0;
 	sym_tab_global = NULL;
 	sym_tab_local = NULL;
 	next_tmp = 0;
+	tmp_max = -1; 
 	next_label = 1;
+}
+
+void tmp_init()
+{
+	next_tmp = 0; 
 }
 
 void tac_complete()
@@ -156,10 +164,21 @@ SYM *mk_tmp(void)
 {
 	SYM *sym;
 	char *name;
-
 	name = malloc(12);
 	sprintf(name, "_t%d", next_tmp++); /* Set up text */
-	return mk_var(name);
+
+	//already defined 
+	if (scope_local)
+		sym = lookup_sym(sym_tab_local, name);
+	else
+		sym = lookup_sym(sym_tab_global, name);
+
+	if(sym != NULL){
+		return sym;
+	}else{
+		tmp_max = max(tmp_max,next_tmp-1);
+		return mk_var(name);
+	}
 }
 
 TAC *declare_addr_para(char *name)
@@ -250,15 +269,21 @@ EXP *do_bin(int binop, EXP *exp1, EXP *exp2)
 
 		return exp1; /* The new expression */
 	}
-
-	temp = mk_tac(TAC_VAR, mk_tmp(), NULL, NULL);
-	temp->prev = join_tac(exp1->tac, exp2->tac);
-	ret = mk_tac(binop, temp->a, exp1->ret, exp2->ret);
-	ret->prev = temp;
-
-	exp1->ret = temp->a;
-	exp1->tac = ret;
-
+	if(next_tmp > tmp_max){
+		temp = mk_tac(TAC_VAR, mk_tmp(), NULL, NULL);
+		temp->prev = join_tac(exp1->tac, exp2->tac);
+		ret = mk_tac(binop, temp->a, exp1->ret, exp2->ret);
+		ret->prev = temp;
+		exp1->ret = temp->a;
+		exp1->tac = ret;
+	}else{
+		SYM* tmp_al; //already exists
+		tmp_al = mk_tmp();
+		ret = mk_tac(binop, tmp_al, exp1->ret, exp2->ret);
+		ret->prev = join_tac(exp1->tac, exp2->tac);
+		exp1->ret = tmp_al;
+		exp1->tac = ret;
+	}
 	return exp1;
 }
 
@@ -301,15 +326,22 @@ EXP *do_cmp(int binop, EXP *exp1, EXP *exp2)
 		exp1->ret = mk_const(newval); /* New space for result */
 		return exp1;				  /* The new expression */
 	}
+	if(next_tmp > tmp_max){
+		temp = mk_tac(TAC_VAR, mk_tmp(), NULL, NULL);
+		temp->prev = join_tac(exp1->tac, exp2->tac);
+		ret = mk_tac(binop, temp->a, exp1->ret, exp2->ret);
+		ret->prev = temp;
 
-	temp = mk_tac(TAC_VAR, mk_tmp(), NULL, NULL);
-	temp->prev = join_tac(exp1->tac, exp2->tac);
-	ret = mk_tac(binop, temp->a, exp1->ret, exp2->ret);
-	ret->prev = temp;
-
-	exp1->ret = temp->a;
-	exp1->tac = ret;
-
+		exp1->ret = temp->a;
+		exp1->tac = ret;
+	}else{
+		SYM* tmp_al;
+		tmp_al = mk_tmp();
+		ret = mk_tac(binop, tmp_al, exp1->ret, exp2->ret);
+		ret->prev = join_tac(exp1->tac, exp2->tac);
+		exp1->ret = tmp_al;
+		exp1->tac = ret;
+	}
 	return exp1;
 }
 
@@ -330,14 +362,22 @@ EXP *do_un(int unop, EXP *exp)
 
 		return exp; /* The new expression */
 	}
+	if(next_tmp > tmp_max){
+		temp = mk_tac(TAC_VAR, mk_tmp(), NULL, NULL);
+		temp->prev = exp->tac;
+		ret = mk_tac(unop, temp->a, exp->ret, NULL);
+		ret->prev = temp;
 
-	temp = mk_tac(TAC_VAR, mk_tmp(), NULL, NULL);
-	temp->prev = exp->tac;
-	ret = mk_tac(unop, temp->a, exp->ret, NULL);
-	ret->prev = temp;
-
-	exp->ret = temp->a;
-	exp->tac = ret;
+		exp->ret = temp->a;
+		exp->tac = ret;
+	}else{
+		SYM* tmp_al; 
+		tmp_al = mk_tmp();
+		ret = mk_tac(unop, tmp_al , exp->ret, NULL);
+		ret->prev = exp->tac;
+		exp->ret = tmp_al;
+		exp->tac = ret;
+	}
 
 	return exp;
 }
@@ -379,10 +419,14 @@ EXP *do_call_ret(char *name, EXP *arglist)
 	SYM *ret;  /* Where function result will go */
 	TAC *code; /* Resulting code */
 	TAC *temp; /* Temporary for building code */
-
-	ret = mk_tmp(); /* For the result */
-	code = mk_tac(TAC_VAR, ret, NULL, NULL);
-
+	
+	if(next_tmp > tmp_max){
+		ret = mk_tmp(); /* For the result */
+		code = mk_tac(TAC_VAR, ret, NULL, NULL);
+	}else{
+		ret = mk_tmp();
+		code = NULL;
+	}
 	for (alt = arglist; alt != NULL; alt = alt->next)
 		code = join_tac(code, alt->tac);
 
@@ -402,9 +446,9 @@ EXP *do_call_ret(char *name, EXP *arglist)
 	temp = mk_tac(TAC_CALL, ret, (SYM *)strdup(name), NULL);
 	temp->prev = code;
 	code = temp;
-
 	return mk_exp(NULL, ret, code);
 }
+
 SYM *mk_addr(int addr)
 {
 	SYM *c = mk_sym(); /* Create a new node */
