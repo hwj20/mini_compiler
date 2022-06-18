@@ -10,7 +10,7 @@ make
 ```
 ```
 .\mini ${your_filename}
-gcc ${executive_name} -o ${your_filename}.s
+gcc ${exec_name} -o ${your_filename}.s
 ```
 
 # TODO List
