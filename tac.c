@@ -526,7 +526,7 @@ SYM *get_var(char *name)
 		error("name not declared as local/global variable");
 		return NULL;
 	}
-
+	
 	if (sym->type != SYM_VAR)
 	{
 		error("not a variable");
@@ -746,4 +746,19 @@ void error(char *str)
 {
 	fprintf(stderr, "error: %s\n", str);
 	exit(0);
+}
+
+void check_label(SYM* labeltab){
+	SYM *t =  labeltab;
+	while(t !=NULL)
+	{
+		if(t->type == TAC_UD_LABEL){
+			error(t->name);
+		}
+		t = t->next;
+	}
+}
+
+TAC *do_goto(SYM *label){
+	TAC *a = mk_tac(TAC_GOTO,label,NULL,NULL);
 }

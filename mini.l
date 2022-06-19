@@ -9,6 +9,12 @@
 
 "int"  {  return INT;  }
 
+"goto"  {return GOTO;}
+
+"++" {return SELFADD;}
+
+"--" {return SELFSUB;}
+
 "print"  {  return PRINT;  }
 
 "return"  {  return RETURN;  }

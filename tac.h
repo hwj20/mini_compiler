@@ -33,6 +33,7 @@
 #define TAC_RETURN 22	   /* return a */
 #define TAC_ACTUAL_ADDR 23 /* formal_addr a */
 #define TAC_FORMAL_ADDR 24 /* formal_addr a */
+#define TAC_UD_LABEL 25    /* label that waits to be defined:*/  
 #include "stdbool.h"
 
 /* struct */
@@ -52,10 +53,10 @@ typedef struct sym
 	int offset;
 	int value;
 	int label;
+	int active;
 	bool convey_addr;
 	struct tac *address; /* SYM_FUNC */
 	struct sym *next;
-	int active; // 活跃度变量
 } SYM;
 
 typedef struct tac /* TAC instruction node */
@@ -77,8 +78,9 @@ typedef struct exp /* Parser expression */
 } EXP;
 
 /* global var */
-int yylineno, scope_local, next_tmp, tmp_max, next_label; // tmp_max : the count of _t that is already defined
+int yylineno, scope_local, next_tmp,tmp_max,next_label;  //tmp_max : the count of _t that is already defined
 SYM *sym_tab_global, *sym_tab_local;
+SYM *label_tab;
 TAC *tac_first, *tac_last;
 
 /* function */
@@ -89,6 +91,7 @@ void tac_dump();
 void tac_print(TAC *i);
 SYM *mk_const(int n);
 SYM *mk_text(char *text);
+SYM *mk_tmp();
 SYM *mk_addr(int addr);
 TAC *mk_tac(int op, SYM *a, SYM *b, SYM *c);
 EXP *mk_exp(EXP *next, SYM *ret, TAC *code);
@@ -110,3 +113,8 @@ EXP *do_un(int unop, EXP *exp);
 EXP *do_call_ret(char *name, EXP *arglist);
 void error(char *str);
 TAC *declare_addr_para(char *name);
+SYM *lookup_sym(SYM *symtab, char *name);
+SYM *mk_label(char *name);
+void insert_sym(SYM **symtab, SYM *sym);
+TAC *do_goto(SYM *label);
+void check_label(SYM* labeltab);

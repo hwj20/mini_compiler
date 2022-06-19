@@ -70,7 +70,10 @@ extern int yydebug;
     RETURN = 276,
     INTEGER = 277,
     IDENTIFIER = 278,
-    TEXT = 279
+    TEXT = 279,
+    SELFADD = 280,
+    SELFSUB = 281,
+    GOTO = 282
   };
 #endif
 /* Tokens.  */
@@ -96,6 +99,9 @@ extern int yydebug;
 #define INTEGER 277
 #define IDENTIFIER 278
 #define TEXT 279
+#define SELFADD 280
+#define SELFSUB 281
+#define GOTO 282
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -109,7 +115,7 @@ union YYSTYPE
 	TAC *tac;
 	EXP	*exp;
 
-#line 113 "mini.y.h"
+#line 119 "mini.y.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

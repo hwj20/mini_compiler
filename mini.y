@@ -21,15 +21,19 @@ void yyerror(char* msg);
 
 %token INT EQ NE LT LE GT GE UMINUS IF THEN ELSE FI WHILE DO DONE CONTINUE FUNC PRINT RETURN
 %token <string> INTEGER IDENTIFIER TEXT
+%token SELFADD SELFSUB GOTO
+
 
 %left EQ NE LT LE GT GE
 %left '+' '-'
 %left '*' '/'
 %right UMINUS
 
-%type <tac> program function_declaration_list function_declaration function parameter_list variable_list statement assignment_statement print_statement print_list print_item return_statement null_statement if_statement while_statement call_statement block declaration_list declaration statement_list error block_statement_list
-%type <exp> argument_list expression_list expression call_expression
+%type <tac> program function_declaration_list function_declaration function parameter_list variable_list statement assignment_statement print_statement print_list print_item return_statement null_statement if_statement while_statement call_statement block declaration statement_list error  
+%type <exp> argument_list expression_list expression call_expression 
 %type <sym> function_head
+%type <tac> label_statement goto_statement self_statement
+
 
 %%
 
@@ -72,6 +76,7 @@ function : function_head '(' parameter_list ')' block
 	$$=do_func($1, $3, $5);
 	scope_local=0; /* Leave local scope. */
 	sym_tab_local=NULL; /* Clear local symbol table. */
+	check_label(label_tab);
 }
 | error
 {
@@ -116,8 +121,12 @@ statement : assignment_statement ';'
 | return_statement ';'
 | print_statement ';'
 | null_statement ';'
+| self_statement ';'
+| goto_statement ';'
+| label_statement ':'
 | if_statement
 | while_statement
+| declaration
 | block
 | error
 {
@@ -126,34 +135,36 @@ statement : assignment_statement ';'
 }
 ;
 
-block : '{' block_statement_list '}'
+self_statement : IDENTIFIER SELFADD{
+	EXP *t1=mk_exp(NULL, get_var($1), NULL);
+	EXP *t2=mk_exp(NULL, mk_const(1), NULL);
+	EXP *t3 = do_bin(TAC_ADD,t1,t2);
+	$$ = do_assign(get_var($1),t3);
+}
+|IDENTIFIER SELFSUB{
+	EXP *t1=mk_exp(NULL, get_var($1), NULL);
+	EXP *t2=mk_exp(NULL, mk_const(1), NULL);
+	EXP *t3 = do_bin(TAC_SUB,t1,t2);
+	$$ = do_assign(get_var($1),t3);
+}
+|SELFADD IDENTIFIER {
+	EXP *t1=mk_exp(NULL, get_var($2), NULL);
+	EXP *t2=mk_exp(NULL, mk_const(1), NULL);
+	EXP *t3 = do_bin(TAC_ADD,t1,t2);
+	$$ = do_assign(get_var($2),t3);
+}
+|SELFSUB IDENTIFIER {
+	EXP *t1=mk_exp(NULL, get_var($2), NULL);
+	EXP *t2=mk_exp(NULL, mk_const(1), NULL);
+	EXP *t3 = do_bin(TAC_SUB,t1,t2);
+	$$ = do_assign(get_var($2),t3);
+}
+;
+
+block : '{' statement_list '}'
 {
 	$$=$2;
 }               
-;
-
-block_statement_list: 
-{
-	$$ = NULL;
-}
-| block_statement_list declaration_list
-{
-	$$ = join_tac($1,$2);
-}
-| block_statement_list statement_list
-{
-	$$ = join_tac($1,$2);
-}
-;
-
-declaration_list        :
-{
-	$$=NULL;
-}
-| declaration_list declaration
-{
-	$$=join_tac($1, $2);
-}
 ;
 
 statement_list : statement
@@ -231,6 +242,60 @@ expression : expression '+' expression
 {
 	$$=mk_exp(NULL, get_var($1), NULL);
 }
+|IDENTIFIER SELFADD{
+	SYM *tmp;
+	TAC *u1;
+	if(next_tmp > tmp_max){
+		tmp = mk_tmp();
+		u1 = mk_tac(TAC_VAR,tmp,NULL,NULL);
+	}else{
+		tmp = mk_tmp();
+		u1 = NULL;
+	}
+	EXP *u2 = mk_exp(NULL,get_var($1),NULL);
+	TAC *u3 = do_assign(tmp,u2);
+	u3 = join_tac(u1,u3);
+	EXP *t1 = mk_exp(NULL, get_var($1), NULL);
+	EXP *t2 = mk_exp(NULL, mk_const(1), NULL);
+	EXP *t3 = do_bin(TAC_ADD,t1,t2);
+	TAC *t4 = do_assign(get_var($1),t3);
+	t4 = join_tac(u3,t4);
+	$$ = mk_exp(NULL,tmp,t4);
+}
+|IDENTIFIER SELFSUB{
+	SYM *tmp;
+	TAC *u1;
+	if(next_tmp > tmp_max){
+		tmp = mk_tmp();
+		u1 = mk_tac(TAC_VAR,tmp,NULL,NULL);
+	}else{
+		tmp = mk_tmp();
+		u1 = NULL;
+	}
+	EXP *u2 = mk_exp(NULL,get_var($1),NULL);
+	TAC *u3 = do_assign(tmp,u2);
+	u3 = join_tac(u1,u3);
+	EXP *t1 = mk_exp(NULL, get_var($1), NULL);
+	EXP *t2 = mk_exp(NULL, mk_const(1), NULL);
+	EXP *t3 = do_bin(TAC_SUB,t1,t2);
+	TAC *t4 = do_assign(get_var($1),t3);
+	t4 = join_tac(u3,t4);
+	$$ = mk_exp(NULL,tmp,t4);
+}
+|SELFADD IDENTIFIER {
+	EXP *t1 = mk_exp(NULL, get_var($2), NULL);
+	EXP *t2 = mk_exp(NULL, mk_const(1), NULL);
+	EXP *t3 = do_bin(TAC_ADD,t1,t2);
+	TAC *t4 = do_assign(get_var($2),t3);
+	$$ = mk_exp(NULL,t4->a,t4);
+}
+|SELFSUB IDENTIFIER {
+	EXP *t1 = mk_exp(NULL, get_var($2), NULL);
+	EXP *t2 = mk_exp(NULL, mk_const(1), NULL);
+	EXP *t3 = do_bin(TAC_SUB	,t1,t2);
+	TAC *t4 = do_assign(get_var($2),t3);
+	$$ = mk_exp(NULL,t4->a,t4);
+}
 | call_expression
 {
 	$$=$1;
@@ -299,6 +364,34 @@ null_statement : CONTINUE
 {
 	$$=NULL;
 }               
+;
+
+label_statement : IDENTIFIER
+{
+	SYM* t = lookup_sym(label_tab,$1);
+	if(t == NULL){
+		t = mk_label($1);
+		insert_sym(&label_tab,t);
+		$$ = mk_tac(TAC_LABEL, t, NULL, NULL);
+	}else if(t->type == TAC_UD_LABEL){
+		t->type = TAC_LABEL;
+		$$ = mk_tac(TAC_LABEL, t, NULL, NULL);
+	}else{
+		error("the label has already been declared!");
+	}
+}
+;
+
+goto_statement : GOTO IDENTIFIER
+{
+	SYM* t = lookup_sym(label_tab,$2);
+	if(t == NULL) {
+		t = mk_label($2);
+		t->type = TAC_UD_LABEL;
+		insert_sym(&label_tab,t);
+	}
+	$$ = do_goto(t);
+}
 ;
 
 if_statement : IF '(' expression ')' block
