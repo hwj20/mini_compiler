@@ -152,6 +152,7 @@ statement_list : statement
 assignment_statement : IDENTIFIER '=' expression
 {
 	$$=do_assign(get_var($1), $3);
+	tmp_init();                ////////////////////////////////////////////////////////////////////////
 }
 ;
 
@@ -235,8 +236,12 @@ argument_list           :
 ;
 
 expression_list : expression
+{
+	tmp_init(); ////////////////////////////////////////////
+}
 |  expression_list ',' expression
 {
+	tmp_init(); /////////////////////////////////////////////////
 	$3->next=$1;
 	$$=$3;
 }
@@ -259,6 +264,7 @@ print_item : expression
 {
 	$$=join_tac($1->tac,
 	do_lib("PRINTN", $1->ret));
+	tmp_init();  ////////////////////////////////////////////////
 }
 | TEXT
 {
@@ -271,6 +277,7 @@ return_statement : RETURN expression
 	TAC *t=mk_tac(TAC_RETURN, $2->ret, NULL, NULL);
 	t->prev=$2->tac;
 	$$=t;
+	tmp_init();/////////////////////////////////////////////////
 }               
 ;
 
@@ -283,16 +290,19 @@ null_statement : CONTINUE
 if_statement : IF '(' expression ')' block
 {
 	$$=do_if($3, $5);
+	tmp_init();/////////////////////////////////////////////////
 }
 | IF '(' expression ')' block ELSE block
 {
 	$$=do_test($3, $5, $7);
+	tmp_init();/////////////////////////////////////////////////
 }
 ;
 
 while_statement : WHILE '(' expression ')' block
 {
 	$$=do_while($3, $5);
+	tmp_init();/////////////////////////////////////////////////
 }               
 ;
 
