@@ -27,7 +27,7 @@ void yyerror(char* msg);
 %left '*' '/'
 %right UMINUS
 
-%type <tac> program function_declaration_list function_declaration function parameter_list variable_list statement assignment_statement print_statement print_list print_item return_statement null_statement if_statement while_statement call_statement block declaration_list declaration statement_list error
+%type <tac> program function_declaration_list function_declaration function parameter_list variable_list statement assignment_statement print_statement print_list print_item return_statement null_statement if_statement while_statement call_statement block declaration_list declaration statement_list error block_statement_list
 %type <exp> argument_list expression_list expression call_expression
 %type <sym> function_head
 
@@ -126,10 +126,24 @@ statement : assignment_statement ';'
 }
 ;
 
-block : '{' declaration_list statement_list '}'
+block : '{' block_statement_list '}'
 {
-	$$=join_tac($2, $3);
+	$$=$2;
 }               
+;
+
+block_statement_list: 
+{
+	$$ = NULL;
+}
+| block_statement_list declaration_list
+{
+	$$ = join_tac($1,$2);
+}
+| block_statement_list statement_list
+{
+	$$ = join_tac($1,$2);
+}
 ;
 
 declaration_list        :
