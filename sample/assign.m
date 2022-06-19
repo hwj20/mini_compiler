@@ -1,14 +1,18 @@
+int i,j,k,l,m;
+i=1;
+j=2;
+k=3;
+
 main()
 {
-	int i,j,k,l,m;
-	i=8;
-	j=i+2;
-	k=i-3;
-	l=i*2;
-	m=i/2;
-	print("i=",i,"\n"); 
-	print("j=",j,"\n"); 
-	print("k=",k,"\n"); 
-	print("l=",l,"\n"); 
-	print("m=",m,"\n"); 
+	j = f(i,j,k);
+	print(j);
+}
+
+f(i,j,k){
+	int u,v,w;
+	u = i+j+k;
+	v = i+j+k;
+	w = u+v;
+	return w;
 }
