@@ -6,6 +6,67 @@
 #include "obj.h"
 #include "myRegAllocation.h"
 
+int turn = 0;
+void update_active(SYM *c)
+{
+    turn++;
+    c->active = turn;
+}
+
+int MostInactive(int mux)
+{
+    int min, r;
+    int activelist[ARM_NUM];
+
+    if (!mux)
+    {
+        int modcount = 0;
+        for (r = ARM_GEN; r < ARM_NUM; r++)
+        {
+            if (!rdesc[r].modified)
+            {
+                activelist[r] = rdesc[r].var->active;
+            }
+            else
+            {
+                activelist[r] = -1;
+                modcount++;
+            }
+        }
+        if (modcount == ARM_NUM - ARM_GEN)
+        {
+            return -1;
+        }
+
+        for (r = ARM_GEN; r < ARM_NUM; r++)
+        {
+            min = ARM_GEN;
+            if (activelist[r] < activelist[min] && activelist[r] != -1)
+            {
+                min = r;
+            }
+        }
+        return min;
+    }
+    else
+    {
+        for (r = ARM_GEN; r < ARM_NUM; r++)
+        {
+            activelist[r] = rdesc[r].var->active;
+        }
+
+        for (r = ARM_GEN; r < ARM_NUM; r++)
+        {
+            min = ARM_GEN;
+            if (activelist[r] < activelist[min])
+            {
+                min = r;
+            }
+        }
+        return min;
+    }
+}
+
 /* Get the first reg as a destination reg. */
 void spill_one(int r)
 {
@@ -84,25 +145,26 @@ int get_first_val_reg(SYM *c)
         }
     }
 
-    for (r = ARM_GEN; r < ARM_NUM; r++)
+    r = MostInactive(0); /* Unmodifed register */
+    if (r != -1)
     {
-        if (!rdesc[r].modified) /* Unmodifed register */
-        {
-            clear_desc(r);
-            load_reg(r, c);
-            return r;
-        }
+        clear_desc(r);
+        load_reg(r, c);
+        return r;
     }
-#endif
 
-    spill_one(ARM_GEN); /* Modified register */
-    clear_desc(ARM_GEN);
-    load_reg(ARM_GEN, c);
-    return ARM_GEN;
+    r = MostInactive(1); /* Modified register */
+    spill_one(r);
+    clear_desc(r);
+    load_reg(r, c);
+    return r;
+#endif
 }
+
 int get_first_reg(SYM *c)
 {
     int r = get_first_val_reg(c);
+    update_active(c);
     if (c->type == SYM_ADDR)
         load_val_of_addr(r);
     return r;
@@ -148,6 +210,16 @@ int get_second_val_reg(SYM *b, int first_reg)
             }
         }
     }
+    for (r = ARM_GEN; r < ARM_NUM; r++)
+    {
+        if (r != first_reg) /* Modified register */
+        {
+            spill_one(r);
+            clear_desc(r);
+            load_reg(r, b);
+            return r;
+        }
+    }
 #else
 
     for (r = ARM_GEN; r < ARM_NUM; r++)
@@ -159,31 +231,30 @@ int get_second_val_reg(SYM *b, int first_reg)
         }
     }
 
-    for (r = ARM_GEN; r < ARM_NUM; r++)
+    r = MostInactive(0); /* Unmodifed register */
+    if ((r != -1) && (r != first_reg))
     {
-        if (!rdesc[r].modified && (r != first_reg)) /* Unmodifed register */
-        {
-            clear_desc(r);
-            load_reg(r, b);
-            return r;
-        }
+        clear_desc(r);
+        load_reg(r, b);
+        return r;
+    }
+
+    r = MostInactive(1); /* Modified register */
+    if (r != first_reg)
+    {
+        spill_one(r);
+        clear_desc(r);
+        load_reg(r, b);
+        return r;
     }
 
 #endif
-    for (r = ARM_GEN; r < ARM_NUM; r++)
-    {
-        if (r != first_reg) /* Modified register */
-        {
-            spill_one(r);
-            clear_desc(r);
-            load_reg(r, b);
-            return r;
-        }
-    }
 }
+
 int get_second_reg(SYM *b, int first_reg)
 {
     int r = get_second_val_reg(b, first_reg);
+    update_active(b);
     if (b->type == SYM_ADDR)
         load_val_of_addr(r);
     return r;

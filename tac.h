@@ -55,6 +55,7 @@ typedef struct sym
 	bool convey_addr;
 	struct tac *address; /* SYM_FUNC */
 	struct sym *next;
+	int active; // 活跃度变量
 } SYM;
 
 typedef struct tac /* TAC instruction node */
@@ -76,7 +77,7 @@ typedef struct exp /* Parser expression */
 } EXP;
 
 /* global var */
-int yylineno, scope_local, next_tmp,tmp_max,next_label;  //tmp_max : the count of _t that is already defined
+int yylineno, scope_local, next_tmp, tmp_max, next_label; // tmp_max : the count of _t that is already defined
 SYM *sym_tab_global, *sym_tab_local;
 TAC *tac_first, *tac_last;
 

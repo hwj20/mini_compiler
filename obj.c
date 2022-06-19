@@ -354,10 +354,6 @@ void asm_code(TAC *c)
 		return;
 
 	case TAC_VAR:
-		// if (c->a->name[0] == '_' && c->a->name[1] == 't')
-		// {
-		// 	return;
-		// }
 		if (scope_local)
 		{
 			c->a->store = 1; /* local var */
@@ -399,10 +395,6 @@ void asm_pre(TAC *c)
 		func_para_count[++func_para_top] = 0;
 		break;
 	case TAC_VAR:
-		// if (c->a->name[0] == '_' && c->a->name[1] == 't')
-		// {
-		// 	return;
-		// }
 		func_var_count[func_var_top]++;
 		break;
 	case TAC_FORMAL_ADDR:

@@ -22,29 +22,29 @@ main:
 
 	# l = 1
 	MOV x1,1
-	LDR x2,[x29,0]
+	LDR x2,[x29,-8]
 
 	# m = 2
 	MOV x2,2
-	LDR x3,[x29,-8]
+	LDR x3,[x29,-16]
 
 	# n = 3
 	MOV x3,3
-	LDR x4,[x29,-16]
+	LDR x4,[x29,-24]
 
 	# actual l
-	STR x1, [x29,0]
+	STR x1, [x29,-8]
 	STR x1, [sp,-8]
 
 	# call PRINTN
-	STR x2, [x29,-8]
-	STR x3, [x29,-16]
+	STR x2, [x29,-16]
+	STR x3, [x29,-24]
 	SUB sp,sp,16
 	BL PRINTN
 	ADD sp,sp,16
 
 	# actual m
-	LDR x1,[x29,-8]
+	LDR x1,[x29,-16]
 	STR x1, [sp,-8]
 
 	# call PRINTN
@@ -53,7 +53,7 @@ main:
 	ADD sp,sp,16
 
 	# actual n
-	LDR x1,[x29,-16]
+	LDR x1,[x29,-24]
 	STR x1, [sp,-8]
 
 	# call PRINTN
@@ -64,15 +64,15 @@ main:
 	# var _t0
 
 	# actual n
-	LDR x1,[x29,-16]
+	LDR x1,[x29,-24]
 	STR x1, [sp,-8]
 
 	# actual_addr m
-	ADD x0, x29,-8
+	ADD x0, x29,-16
 	STR x0, [sp,-16]
 
 	# actual l
-	LDR x2,[x29,0]
+	LDR x2,[x29,-8]
 	STR x2, [sp,-24]
 
 	# _t0 = call func
@@ -82,20 +82,20 @@ main:
 
 	# n = _t0
 	MOV x1,x0
-	LDR x2,[x29,-16]
+	LDR x2,[x29,-24]
 
 	# actual l
-	LDR x2,[x29,0]
+	LDR x2,[x29,-8]
 	STR x2, [sp,-8]
 
 	# call PRINTN
-	STR x1, [x29,-16]
+	STR x1, [x29,-24]
 	SUB sp,sp,16
 	BL PRINTN
 	ADD sp,sp,16
 
 	# actual m
-	LDR x1,[x29,-8]
+	LDR x1,[x29,-16]
 	STR x1, [sp,-8]
 
 	# call PRINTN
@@ -104,7 +104,7 @@ main:
 	ADD sp,sp,16
 
 	# actual n
-	LDR x1,[x29,-16]
+	LDR x1,[x29,-24]
 	STR x1, [sp,-8]
 
 	# call PRINTN

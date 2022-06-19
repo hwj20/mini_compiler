@@ -1,4 +1,4 @@
-make.exe --dry-run --always-make --keep-going --print-directory
+make.exe --dry-run --keep-going --print-directory
 '\\wsl$\Ubuntu\home\hwj20\object\mini'
 ����Ϊ��ǰĿ¼������·�������� CMD.EXE��
 UNC ·������֧�֡�Ĭ��ֵ��Ϊ Windows Ŀ¼��
