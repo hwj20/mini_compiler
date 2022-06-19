@@ -8,6 +8,10 @@ use yacc lex to generate a simple compiler, whose grammer is like C
 make clean
 make
 ```
+```
+.\mini ${your_filename}
+gcc ${exec_name} -o ${your_filename}.s
+```
 
 # TODO List
 
@@ -32,7 +36,7 @@ make
 
 ## 测试部分
 
-### 未实现
+### 已实现
 
 编码功能单元测试
 
