@@ -36,7 +36,7 @@ gcc ${exec_name} -o ${your_filename}.s
 
 ### 已实现
 
-编码功能单元测试
+编码功能功能测试
 
 ## 其它部分
 
