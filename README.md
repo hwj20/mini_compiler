@@ -1,6 +1,6 @@
 # mini_compiler
 
-using yacc and lex to generate a simple C-like compiler
+using yacc and lex to make a simple C-like compiler
 
 使用方法
 
